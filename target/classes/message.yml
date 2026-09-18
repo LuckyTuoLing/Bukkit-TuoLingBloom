@@ -1,0 +1,69 @@
+#拓灵绽放 消息配置文件
+#占位符说明:
+# %preset%     - 预设名
+# %view%       - 动画名
+# %entry%      - 世界贴图名
+# %cooldown%   - 冷却剩余秒数
+# %require%    - 需要的数量
+# %actual%     - 实际的数量
+# %value%      - 配置的value值
+# %mode%       - 策略模式
+# %type%       - 类型(texture/model)
+# %index%      - 层级索引
+# %name%       - 名称
+# %key%        - 配置键
+# %error%      - 错误信息
+# %version%    - 版本号
+
+#============================== 玩家消息 ==============================
+player:
+  bloom-success: "§f[§c绽放§f] §a绽放成功"
+  preset-not-exist: "§f[§c绽放§f] §a预设 §e%preset% §a不存在"
+  not-bloomed: "§f[§c绽放§f] §a你没有绽放过 §e%preset%"
+  bloom-cancel: "§f[§c绽放§f] §a取消绽放 §e%preset%"
+  conflict: "§f[§c绽放§f] §a你现在正在绽放 §e%current% §a与 §e%preset% §a冲突"
+  cooldown: "§f[§c绽放§f] §a正在冷却,剩余 §e%cooldown% §a秒"
+  reload-success: "§f[§c绽放§f] §a重载成功"
+  no-permission: "§f[§c绽放§f] §a你没有权限执行此操作"
+  config-error-slot: "§f[§c绽放§f] §a配置文件出现错误,槽位物品解析失败!请联系管理员"
+  config-error-slot-detail: "§f[§c绽放§f] §a具体错误请见 §e%preset%/value"
+  config-error-amount: "§f[§c绽放§f] §a配置出错,准备绽放的数量为 §e%actual%§a,但动画预设数量为 §e%require%"
+  config-error-value-not-number: "§f[§c绽放§f] §a配置错误: value 必须是数字,但实际为 §e%value%"
+
+#============================== 控制台消息 ==============================
+console:
+  player-only: "§f[§c绽放§f] §a该命令只能由玩家执行"
+  reload-success: "§f[§c绽放§f] §a重载成功"
+  no-permission: "§f[§c绽放§f] §a你没有权限执行此操作"
+  not-bloomed: "§f[§c绽放§f] §c预设 §e%preset% §c未绽放"
+  conflict: "§f[§c绽放§f] §c冲突: 当前 §e%current% §c与 §e%preset%"
+  preset-not-exist: "§f[§c绽放§f] §cpreset 不存在: §e%preset%"
+  bloom-type-not-found: "§f[§c绽放§f] §c未找到 bloom 类型: §e%type% §c(preset=§e%preset%§c)"
+  strategy-not-found: "§f[§c绽放§f] §c未找到策略: §e%mode% §c(preset=§e%preset%§c)"
+  config-not-found: "§f[§c绽放§f] §c找不到 §e%type% §c配置: §e%name% §c(preset=§e%preset%§c)"
+  layers-empty: "§f[§c绽放§f] §clayers 为空,无法绽放 preset=§e%preset%"
+  layer-not-exist: "§f[§c绽放§f] §clayer §e%index% §c不存在,跳过 preset=§e%preset%"
+  layer-texture-null: "§f[§c绽放§f] §clayer §e%index% §cworldTexture 为 null,跳过 preset=§e%preset%"
+  settings-empty: "§f[§c绽放§f] §csettings 为空,无法绽放 preset=§e%preset%"
+  cache-not-registered: "§f[§c绽放§f] §c%name% 尚未注册!请检查 CacheManager 构造函数"
+  config-empty: "§f[§c绽放§f] §c%type%加载失败: 配置文件为空!"
+  config-parse-error: "§f[§c绽放§f] §c%type%解析失败: setting 节点下存在非数字 key §e%key%§c,已跳过"
+  reload-failed: "§f[§c绽放§f] §creloadAll 失败: §e%error%"
+  mm-spawn-failed: "§f[§c绽放§f] §cMythicMob生成失败, 配置名: §e%name% §c不存在"
+  identify-not-found: "§f[§c绽放§f] §cidentify-texture 中找不到: §e%name%"
+  config-name-not-exist: "§f[§c绽放§f] §c不存在的配置名: §e%name%"
+  world-preset-not-exist: "§f[§c世界贴图§f] §c§e%entry% §c的 preset §e%preset% §c不存在,跳过"
+  world-paths-empty: "§f[§c世界贴图§f] §c§e%entry% §c的 paths 为空,跳过"
+  world-layers-empty: "§f[§c世界贴图§f] §c§e%entry% §c的动画预设为空,跳过"
+  world-amount-error: "§f[§c世界贴图§f] §c配置出错: §e%entry% §c准备渲染贴图数量为 §e%actual%§c,但动画 §e%view% §c的预设数量为 §e%require%"
+  world-location-missing: "§f[§c世界贴图§f] §c§e%entry% §c缺少 location 配置,跳过"
+  world-layer-not-exist: "§f[§c世界贴图§f] §c§e%entry% §clayer §e%index% §c不存在,跳过"
+  world-layer-texture-null: "§f[§c世界贴图§f] §c§e%entry% §clayer §e%index% §cworldTexture 为 null,跳过"
+
+#============================== 帮助消息 ==============================
+help:
+  - "§f§l§m—=—=—=—=-=-=-=-§e[§c拓灵绽放§e]§f§l§m—=—=—=—=-=-=-=-"
+  - "§e◈§b/bloom run [preset] §7绽放预设组"
+  - "§e◈§b/bloom remove [preset] §7删除预设组"
+  - "§e◈§b/bloom reload §7重载配置(OP权限)"
+  - "§f§l§m—=—=—=—=-=-=-=-§e[§c拓灵绽放§e]§f§l§m—=—=—=—=-=-=-=-"

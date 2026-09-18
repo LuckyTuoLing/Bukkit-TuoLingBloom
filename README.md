@@ -1,5 +1,4 @@
-[README.md](https://github.com/user-attachments/files/32391235/README.md)
-# Bukkit-TuoLingBloom# 文档合集 · TuoLingBloom
+# 文档合集 · TuoLingBloom
 
 > TuoLingBloom（拓灵绽放）是基于 DragonCore 的多功能动画绽放插件，支持魂环、贴图、模型、表情包、称号等多种效果，还能给 MythicMobs 怪物自动套魂环。
 > 本文档合并且重写自 `wiki.md`（用户文档）与 `dev.md`（开发者文档）。网页版见 `docs.html`。

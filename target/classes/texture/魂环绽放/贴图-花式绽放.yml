@@ -1,0 +1,166 @@
+setting:
+  1:
+    delay: 0
+    texture:
+      translate-x: 0.75
+      translate-y: 2.2899999999999996
+      translate-z: 0.9
+      rotate-x: 90
+      rotate-y: 0
+      rotate-z: 0
+      follow-player-eyes: false
+    animations:
+      translate-animation:
+        direction: z
+        delay: 0
+        distance: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 5
+        to-scale: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: z
+        delay: 0
+        angle: 360
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  2:
+    delay: 1.5
+    texture:
+      translate-x: -0.74
+      translate-y: 2.34
+      translate-z: 0.86
+      rotate-x: 90
+      rotate-y: 0
+      rotate-z: 0
+      follow-player-eyes: false
+    animations:
+      translate-animation:
+        direction: z
+        delay: 0
+        distance: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 5
+        to-scale: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: z
+        delay: 0
+        angle: 360
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  3:
+    delay: 1.5
+    texture:
+      translate-x: 0.74
+      translate-y: 2.34
+      translate-z: -0.67
+      rotate-x: 90
+      rotate-y: 0
+      rotate-z: 0
+      follow-player-eyes: false
+    animations:
+      translate-animation:
+        direction: z
+        delay: 0
+        distance: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 5
+        to-scale: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: z
+        delay: 0
+        angle: 360
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  4:
+    delay: 1.5
+    texture:
+      translate-x: -0.74
+      translate-y: 2.34
+      translate-z: -0.69
+      rotate-x: 90
+      rotate-y: 0
+      rotate-z: 0
+      follow-player-eyes: false
+    animations:
+      translate-animation:
+        direction: z
+        delay: 0
+        distance: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 5
+        to-scale: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: z
+        delay: 0
+        angle: 360
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  5:
+    delay: 1.5
+    texture:
+      translate-x: -0.01
+      translate-y: 2.34
+      translate-z: 0.03
+      rotate-x: 90
+      rotate-y: 0
+      rotate-z: 0
+      follow-player-eyes: false
+    animations:
+      translate-animation:
+        direction: z
+        delay: 0
+        distance: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 5
+        to-scale: 1
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: z
+        delay: 0
+        angle: 360
+        duration: 6000
+        cycle-count: -1
+        fixed: false
