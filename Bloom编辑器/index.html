@@ -1,0 +1,3858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TuoLingBloom · 配置编辑器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg-dark: #0d1117; --bg-panel: #161b22; --bg-card: #1c2128; --bg-hover: #262d36;
+  --border: #30363d; --text-main: #e6edf3; --text-dim: #7d8590; --text-bright: #f0f6fc;
+  --accent: #58a6ff; --accent-dim: #1f6feb; --green: #3fb950; --red: #f85149;
+  --orange: #d29922; --purple: #bc8cff; --radius: 6px;
+}
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ===== TopBar ===== */
+.topbar { height: 48px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0; }
+.topbar .logo { font-size: 15px; font-weight: 600; color: var(--text-bright); white-space: nowrap; }
+.topbar .logo span { color: var(--accent); }
+.topbar .current-file { font-size: 12px; color: var(--text-dim); margin-left: 8px; padding-left: 12px; border-left: 1px solid var(--border); white-space: nowrap; max-width: 380px; overflow: hidden; text-overflow: ellipsis; }
+.topbar .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+.save-status { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; min-width: 90px; }
+.save-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); transition: background .2s; }
+.save-status.saving .dot { background: var(--orange); animation: pulse 1s infinite; }
+.save-status.unsaved .dot { background: var(--text-dim); }
+.save-status.error .dot { background: var(--red); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ===== Buttons ===== */
+.btn { padding: 6px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn:hover { background: var(--bg-hover); border-color: var(--accent); }
+.btn-primary { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+.btn-primary:hover { background: var(--accent); }
+.btn-danger { color: var(--red); }
+.btn-danger:hover { background: rgba(248,81,73,.15); border-color: var(--red); }
+.btn-sm { padding: 3px 8px; font-size: 12px; }
+.btn-green { background: rgba(63,185,80,.15); border-color: rgba(63,185,80,.4); color: var(--green); }
+.btn-green:hover { background: rgba(63,185,80,.25); }
+.btn.active-mode { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+
+/* ===== Main Layout ===== */
+.main { flex: 1; display: flex; overflow: hidden; }
+
+/* ===== File Browser ===== */
+.file-browser { width: 240px; min-width: 240px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.file-browser.collapsed { width: 0; min-width: 0; border-right: none; }
+.fb-header { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.fb-header .title { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; flex: 1; }
+.fb-content { flex: 1; overflow-y: auto; padding: 6px 4px; }
+.fb-tree-item { display: flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: 13px; cursor: pointer; border-radius: 4px; transition: background .1s; user-select: none; white-space: nowrap; }
+.fb-tree-item:hover { background: var(--bg-hover); }
+.fb-tree-item.active { background: rgba(88,166,255,.15); color: var(--accent); }
+.fb-tree-item .fb-icon { font-size: 14px; flex-shrink: 0; }
+.fb-tree-item .fb-arrow { width: 12px; font-size: 10px; color: var(--text-dim); flex-shrink: 0; transition: transform .15s; }
+.fb-tree-item .fb-arrow.expanded { transform: rotate(90deg); }
+.fb-tree-item .fb-name { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.fb-tree-dir { font-weight: 500; color: var(--text-main); }
+.fb-tree-file { color: var(--text-main); }
+.fb-tree-children { margin-left: 12px; }
+
+/* ===== Context Menu ===== */
+.context-menu { position: fixed; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 0; min-width: 140px; z-index: 10001; box-shadow: 0 4px 12px rgba(0,0,0,.4); display: none; }
+.context-menu.show { display: block; }
+.context-menu .cm-item { padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text-main); }
+.context-menu .cm-item:hover { background: var(--bg-hover); color: var(--accent); }
+.context-menu .cm-item.danger { color: var(--red); }
+.context-menu .cm-item.danger:hover { background: rgba(248,81,73,.15); }
+.context-menu .cm-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ===== Editor Container ===== */
+.editor-container { flex: 1; display: flex; overflow: hidden; min-width: 0; }
+.editor-container.hidden { display: none; }
+
+/* ===== Texture Editor (Ring Sidebar + 3D Viewport) ===== */
+.texture-editor { flex: 1; display: flex; overflow: hidden; }
+.ring-sidebar { width: 400px; min-width: 400px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.ring-sidebar.collapsed { width: 0; min-width: 0; border-right: none; }
+.ring-sidebar-header { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-shrink: 0; background: var(--bg-card); }
+.ring-sidebar-header .title { font-size: 13px; font-weight: 600; color: var(--accent); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ring-sidebar-content { flex: 1; overflow-y: auto; padding: 12px; }
+.viewport { flex: 1; position: relative; background: #000; overflow: hidden; min-width: 0; }
+#canvas3d { display: block; width: 100%; height: 100%; }
+
+/* ===== Form Editors (full width) ===== */
+.form-editor { flex: 1; overflow: auto; padding: 20px 24px; min-width: 0; }
+.form-editor .fe-header { font-size: 16px; font-weight: 600; color: var(--text-bright); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.form-editor .fe-section { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+.form-editor .fe-section-title { font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.form-editor .fe-section.collapsed > *:not(.fe-section-title) { display: none; }
+.form-editor .fe-section.collapsed .fe-section-title { margin-bottom: 0; }
+.form-editor .fe-section-title.clickable { cursor: pointer; user-select: none; }
+.form-editor .fe-section-title.clickable:hover { color: var(--text-main); }
+
+/* ===== Tabs ===== */
+.tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; gap: 2px; }
+.tab { padding: 8px 16px; font-size: 13px; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+.tab:hover { color: var(--text-main); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ===== Sidebar sections (kept from old) ===== */
+.sidebar-section { margin-bottom: 16px; }
+.section-title { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+
+.task-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.task-bar .task-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--accent); }
+.task-bar .task-name.empty { color: var(--text-dim); font-weight: 400; }
+
+.ring-list { display: flex; flex-direction: column; gap: 4px; }
+.ring-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 8px; }
+.ring-checkbox { width: 14px; height: 14px; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
+.ring-item:hover { background: var(--bg-hover); border-color: var(--accent); }
+.ring-item.active { border-color: var(--accent); background: rgba(88,166,255,.08); }
+.ring-item .ring-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-dim); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.ring-item .ring-name { flex: 1; font-size: 13px; }
+.ring-item .ring-del { color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 0 4px; }
+.ring-item .ring-del:hover { color: var(--red); }
+
+.anim-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+.anim-section-header { padding: 8px 12px; background: rgba(88,166,255,.06); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.anim-section-header .label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.anim-section-header .label .dot { width: 8px; height: 8px; border-radius: 50%; }
+.anim-section-header .label .dot.translate { background: var(--accent); }
+.anim-section-header .label .dot.scale { background: var(--orange); }
+.anim-section-header .label .dot.rotate { background: var(--purple); }
+.anim-section-header .label .dot.texture { background: var(--green); }
+.anim-section-body { padding: 8px 12px; display: none; }
+.anim-section.expanded .anim-section-body { display: block; }
+
+.anim-item { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; margin-bottom: 6px; }
+.anim-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.anim-item-header .idx { font-size: 11px; color: var(--text-dim); }
+.anim-item-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+
+.field { display: flex; flex-direction: column; gap: 2px; }
+.field label { font-size: 11px; color: var(--text-dim); }
+.field input, .field select { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; color: var(--text-main); font-size: 12px; outline: none; transition: border-color .15s; }
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field-full { grid-column: 1 / -1; }
+
+.texture-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+/* ===== Viewport overlays ===== */
+.viewport-overlay { position: absolute; pointer-events: none; }
+.viewport-top-right { top: 12px; right: 12px; display: flex; gap: 8px; pointer-events: auto; }
+.viewport-bottom { bottom: 12px; left: 12px; right: 12px; display: flex; align-items: center; gap: 12px; pointer-events: auto; }
+.viewport-controls { background: rgba(13,17,23,.85); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 10px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(8px); }
+.play-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--accent-dim); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all .15s; }
+.play-btn:hover { background: var(--accent); }
+.play-btn.pause { background: var(--orange); }
+.timeline-bar { flex: 1; height: 6px; background: var(--bg-card); border-radius: 3px; position: relative; cursor: pointer; }
+.timeline-progress { height: 100%; background: var(--accent); border-radius: 3px; transition: width .05s linear; }
+.timeline-cursor { position: absolute; top: -3px; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; transform: translateX(-50%); transition: left .05s linear; pointer-events: none; }
+.time-display { font-size: 12px; color: var(--text-dim); font-family: 'Consolas', monospace; min-width: 80px; text-align: right; }
+.viewport-info { position: absolute; top: 12px; left: 12px; background: rgba(13,17,23,.85); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-size: 12px; color: var(--text-dim); backdrop-filter: blur(8px); pointer-events: none; max-width: 280px; line-height: 1.6; }
+.viewport-info b { color: var(--text-main); }
+.viewport-hint { position: absolute; top: 12px; right: 12px; background: rgba(88,166,255,.12); border: 1px solid var(--accent); border-radius: var(--radius); padding: 6px 12px; font-size: 12px; color: var(--accent); backdrop-filter: blur(8px); pointer-events: none; display: none; }
+.viewport-hint.show { display: block; animation: toastIn .25s; }
+
+.import-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; transition: all .15s; }
+.import-zone:hover { border-color: var(--accent); background: rgba(88,166,255,.05); }
+.import-zone.dragover { border-color: var(--green); background: rgba(63,185,80,.08); }
+.import-zone p { color: var(--text-dim); font-size: 13px; }
+
+/* ===== Toast ===== */
+.toast-container { position: fixed; top: 60px; right: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; max-width: 360px; animation: toastIn .25s; border-left: 3px solid var(--accent); }
+.toast.success { border-left-color: var(--green); }
+.toast.error { border-left-color: var(--red); }
+.toast.warning { border-left-color: var(--orange); }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ===== Modal ===== */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 10000; display: none; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; width: 360px; max-width: 90vw; max-height: 90vh; overflow-y: auto; }
+.modal-box .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.modal-box .modal-header b { font-size: 15px; }
+.modal-box .modal-close { cursor: pointer; color: var(--text-dim); font-size: 18px; }
+.modal-box .modal-close:hover { color: var(--text-main); }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+.empty-state p { font-size: 13px; margin-top: 8px; }
+
+.ring-color-swatch { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.2); }
+
+/* ===== Table Editor (Identify Texture/Model, Bloom Groups, World Texture) ===== */
+.table-editor { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-editor th { background: var(--bg-card); padding: 8px 10px; text-align: left; font-size: 12px; color: var(--text-dim); border-bottom: 1px solid var(--border); font-weight: 600; }
+.table-editor td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table-editor tr:hover td { background: var(--bg-panel); }
+.table-editor input, .table-editor select { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; color: var(--text-main); font-size: 12px; outline: none; transition: border-color .15s; width: 100%; }
+.table-editor input:focus, .table-editor select:focus { border-color: var(--accent); }
+.table-editor .row-del { color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 0 4px; }
+.table-editor .row-del:hover { color: var(--red); }
+.table-add-row { margin-top: 12px; }
+
+/* ===== Preset Tree ===== */
+.preset-tree { font-size: 13px; }
+.preset-node { margin-left: 16px; }
+.preset-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+.preset-row:hover { background: var(--bg-hover); }
+.preset-row.active { background: rgba(88,166,255,.15); }
+.preset-row .preset-arrow { width: 12px; font-size: 10px; color: var(--text-dim); flex-shrink: 0; transition: transform .15s; }
+.preset-row .preset-arrow.expanded { transform: rotate(90deg); }
+.preset-row .preset-arrow.leaf { color: transparent; }
+.preset-row .preset-icon { font-size: 14px; }
+.preset-row .preset-name { flex: 1; }
+.preset-row .preset-meta { font-size: 11px; color: var(--text-dim); }
+.preset-detail { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin: 12px 0; }
+.preset-detail .pd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.value-tags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 30px; padding: 4px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; }
+.value-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--accent-dim); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+.value-tag .tag-del { cursor: pointer; opacity: .7; }
+.value-tag .tag-del:hover { opacity: 1; }
+.value-add-row { display: flex; gap: 4px; margin-top: 4px; }
+
+/* ===== Raw YAML Editor ===== */
+.raw-yaml-editor { width: 100%; height: calc(100vh - 130px); background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; line-height: 1.5; resize: none; outline: none; tab-size: 2; }
+.raw-yaml-editor:focus { border-color: var(--accent); }
+
+/* ===== Message Editor ===== */
+.message-section { margin-bottom: 16px; }
+.message-row { display: grid; grid-template-columns: 200px 1fr auto; gap: 8px; margin-bottom: 6px; align-items: center; }
+.message-row input { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; color: var(--text-main); font-size: 12px; outline: none; }
+.message-row input:focus { border-color: var(--accent); }
+.message-row input.key { font-family: 'Consolas', monospace; }
+.message-row .row-del { color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 0 4px; }
+.message-row .row-del:hover { color: var(--red); }
+
+.help-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+.help-row input { flex: 1; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; color: var(--text-main); font-size: 12px; outline: none; }
+.help-row input:focus { border-color: var(--accent); }
+
+/* ===== Model Editor ===== */
+.model-layer { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 8px; }
+.model-layer-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.model-layer-header .ml-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-dim); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.model-layer-header .ml-title { flex: 1; font-size: 13px; font-weight: 600; }
+.model-layer-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+
+@media (max-width: 1100px) { .ring-sidebar { width: 340px; min-width: 340px; } .file-browser { width: 200px; min-width: 200px; } }
+</style>
+</head>
+<body>
+
+<!-- ===== TopBar ===== -->
+<div class="topbar">
+  <div class="logo">TuoLingBloom <span>· Editor</span></div>
+  <div class="current-file" id="current-file-display">未打开文件</div>
+  <div class="actions">
+    <div class="save-status" id="save-status"><span class="dot"></span><span id="save-text">已保存</span></div>
+    <button class="btn btn-sm" onclick="toggleFileBrowser()" id="fb-toggle-btn" title="切换文件浏览器">☰</button>
+    <button class="btn btn-sm" onclick="openSettingsModal()" title="DragonCore 设置">⚙</button>
+    <button class="btn btn-sm btn-green" id="show-all-btn" onclick="toggleShowAll()" style="display:none">全部绽放</button>
+    <button class="btn btn-sm" id="undo-btn" onclick="undo()" title="撤销 (Ctrl+Z)" style="opacity:0.4;pointer-events:none;display:none">↶ 撤销</button>
+    <div id="view-mode-divider" style="display:none;width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+    <button class="btn btn-sm" id="mode-texture" onclick="setViewMode('texture')" style="display:none">修改模式</button>
+    <button class="btn btn-sm active-mode" id="mode-character" onclick="setViewMode('character')" style="display:none">人物模式</button>
+    <div id="editor-mode-divider" style="display:none;width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+    <button class="btn btn-sm" id="toggle-editor-mode" onclick="toggleEditorMode()" style="display:none">编辑文件</button>
+    <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+    <button class="btn btn-sm" onclick="exportYML()">导出</button>
+  </div>
+</div>
+
+<!-- ===== Main Layout ===== -->
+<div class="main">
+  <!-- File Browser Sidebar -->
+  <div class="file-browser" id="file-browser">
+    <div class="fb-header">
+      <div class="title">文件</div>
+      <button class="btn btn-sm btn-primary" onclick="openNewFileModal()">+ 新建</button>
+      <button class="btn btn-sm" onclick="refreshFileTree()" title="刷新">⟲</button>
+    </div>
+    <div class="fb-content" id="fb-content"></div>
+  </div>
+
+  <!-- Texture Editor (file browser + ring sidebar + 3D viewport) -->
+  <div class="texture-editor editor-container hidden" id="texture-editor">
+    <div class="ring-sidebar" id="ring-sidebar">
+      <div class="ring-sidebar-header">
+        <div class="title" id="ring-sidebar-title">魂环编辑</div>
+        <button class="btn btn-sm" onclick="toggleRingSidebar()" title="收起">◀</button>
+      </div>
+      <div class="ring-sidebar-content" id="sidebar-content"></div>
+    </div>
+    <div class="viewport" id="viewport">
+      <canvas id="canvas3d"></canvas>
+      <div class="viewport-info" id="viewport-info">
+        <b id="view-mode-title">人物模式</b><br>
+        Y↑ 上 | X← 左右 | Z→ 前后<br>
+        玩家位于 (0,0,0)，身高约2格<br>
+        <span id="hint-tex-1" style="color:var(--accent)">左键拖环 = 移动贴图</span><br>
+        <span id="hint-tex-2" style="color:var(--purple)">Shift+左键拖 = 旋转 X/Y</span><br>
+        <span id="hint-tex-3" style="color:var(--orange)">Ctrl+左键拖 = 旋转 Z</span><br>
+        <span id="hint-char" style="color:var(--text-dim);display:none">左键拖 = 旋转视角 · 滚轮缩放</span>
+      </div>
+      <div class="viewport-hint" id="viewport-hint"></div>
+      <div class="viewport-overlay viewport-top-right">
+        <div class="viewport-controls">
+          <button class="btn btn-sm" onclick="toggleAxisHelper()" id="axis-btn">坐标轴</button>
+          <button class="btn btn-sm" onclick="toggleGrid()" id="grid-btn">网格</button>
+        </div>
+      </div>
+      <div class="viewport-overlay viewport-bottom">
+        <div class="viewport-controls" style="flex:1">
+          <button class="play-btn" onclick="togglePlay()" id="play-btn">▶</button>
+          <button class="btn btn-sm" onclick="resetAnimation()">⟲ 重置</button>
+          <div class="timeline-bar" onclick="seekTimeline(event)" id="timeline-bar">
+            <div class="timeline-progress" id="timeline-progress" style="width:0%"></div>
+            <div class="timeline-cursor" id="timeline-cursor" style="left:0%"></div>
+          </div>
+          <div class="time-display" id="time-display">0.0s / 0.0s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form-based editors (model, config, world-texture, message, raw yaml) -->
+  <div class="form-editor editor-container hidden" id="form-editor"></div>
+</div>
+
+<!-- ===== Context Menu ===== -->
+<div class="context-menu" id="context-menu">
+  <div class="cm-item" data-action="rename">✎ 重命名</div>
+  <div class="cm-item" data-action="duplicate">⧉ 复制</div>
+  <div class="cm-item" data-action="download">↓ 下载</div>
+  <div class="cm-divider"></div>
+  <div class="cm-item danger" data-action="delete">✕ 删除</div>
+</div>
+
+<!-- ===== Toast Container ===== -->
+<div class="toast-container" id="toast-container"></div>
+<input type="file" id="dc-folder-input" webkitdirectory style="display:none">
+
+<!-- ===== New File Modal ===== -->
+<div class="modal-overlay" id="new-file-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <b>新建文件</b>
+      <span class="modal-close" onclick="closeNewFileModal()">×</span>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label>文件类型</label>
+      <select id="new-file-type" style="width:100%" onchange="updateNewFilePath()">
+        <option value="texture">📦 贴图动画 (texture/*.yml)</option>
+        <option value="model">🎭 模型配置 (model/*.yml)</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label>文件名（无需输入目录和后缀）</label>
+      <input type="text" id="new-file-path" placeholder="贴图-测试" style="width:100%">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-sm btn-primary" onclick="confirmCreateFile()" style="flex:1">创建</button>
+      <button class="btn btn-sm" onclick="closeNewFileModal()" style="flex:1">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Settings Modal (DragonCore dir) ===== -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-box" style="width:480px">
+    <div class="modal-header">
+      <b>全局设置</b>
+      <span class="modal-close" onclick="closeSettingsModal()">×</span>
+    </div>
+    <div class="sidebar-section">
+      <div class="section-title">DragonCore 贴图目录</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">用于在「修改模式」下从 DragonCore 资源目录加载贴图。点击「浏览选择」从磁盘选择目录。</div>
+      <div class="field">
+        <label>贴图目录路径</label>
+        <div style="display:flex;gap:4px;align-items:center">
+          <div id="dc-dir-display" style="flex:1;padding:6px 8px;background:var(--bg-dark);border:1px solid var(--border);border-radius:4px;font-size:12px;color:var(--text-main);min-height:30px;font-family:monospace;word-break:break-all"></div>
+          <button class="btn btn-sm btn-primary" onclick="openDirBrowser()">浏览选择</button>
+        </div>
+      </div>
+      <div id="dc-tex-count" style="font-size:12px;color:var(--text-dim);margin-top:6px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Onboarding Modal (首次引导) ===== -->
+<div class="modal-overlay" id="onboarding-modal" style="display:none">
+  <div class="modal-box" style="width:520px">
+    <div class="modal-header">
+      <b>首次使用引导</b>
+    </div>
+    <div style="padding:16px">
+      <p style="margin-bottom:16px;color:var(--text-dim)">配置文件就在编辑器自带的 tasks 文件夹里，无需从服务端导入。只需设置 DragonCore 贴图目录即可开始编辑。</p>
+
+      <div style="margin-bottom:16px">
+        <label style="font-weight:600;display:block;margin-bottom:4px">1. 客户端 DragonCore 贴图目录</label>
+        <p style="font-size:12px;color:var(--text-dim);margin:0 0 8px">DragonCore 资源目录（含贴图 png），用于在编辑器中预览贴图</p>
+        <div style="display:flex;gap:4px;align-items:center">
+          <div id="onboard-dc-display" style="flex:1;padding:6px 8px;background:var(--bg-dark);border:1px solid var(--border);border-radius:4px;font-size:12px;color:var(--text-main);min-height:30px;font-family:monospace;word-break:break-all"></div>
+          <button class="btn btn-sm" onclick="document.getElementById('onboard-dc-input').click()">浏览</button>
+          <input type="file" id="onboard-dc-input" webkitdirectory style="display:none">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:20px">
+        <button class="btn btn-sm btn-primary" id="onboard-finish-btn" onclick="finishOnboarding()" disabled style="flex:1">开始使用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Texture Import Modal ===== -->
+<div class="modal-overlay" id="tex-modal">
+  <div class="modal-box" style="width:480px">
+    <div class="modal-header">
+      <b>导入贴图</b>
+      <span class="modal-close" onclick="closeTexModal()">×</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">为「<b id="tex-modal-ring-name"></b>」选择贴图：</div>
+    <div class="import-zone" id="tex-import-zone" style="margin-bottom:12px">
+      <p>点击或拖拽图片到此处</p>
+    </div>
+    <input type="file" id="tex-file-input" accept="image/*" style="display:none">
+    <div class="field" style="margin-bottom:8px">
+      <label>或输入图片 URL</label>
+      <input type="text" id="tex-url-input" placeholder="https://example.com/ring.png">
+    </div>
+    <div id="tex-dir-section" style="margin-bottom:12px;display:none">
+      <label style="font-size:12px;color:var(--text-dim)">从 DragonCore 目录选择 (共 <span id="tex-list-count">0</span> 个)</label>
+      <input type="text" id="tex-search-input" placeholder="搜索贴图..." style="width:100%;margin:4px 0" oninput="filterTexList()">
+      <div id="tex-list-container" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-card)"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm btn-primary" onclick="applyTexture()" style="flex:1">应用</button>
+      <button class="btn btn-sm" onclick="closeTexModal()" style="flex:1">取消</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<script>
+(function checkCDNs() {
+  if (typeof THREE === 'undefined' || typeof jsyaml === 'undefined') {
+    var msg = document.createElement('div');
+    msg.innerHTML = '<div style="position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:sans-serif;color:#fff;"><div style="font-size:18px;margin-bottom:12px">CDN 资源加载失败</div><div style="font-size:14px;color:#aaa;margin-bottom:16px">请按 <b style="color:#58a6ff">Ctrl+Shift+R</b> 强制刷新重试</div><button onclick="location.reload(true)" style="padding:8px 16px;border:none;border-radius:6px;background:#1f6feb;color:#fff;cursor:pointer;font-size:13px">点击重载</button></div>';
+    document.body.appendChild(msg);
+  }
+})();
+</script>
+
+<script>
+// ============================================================
+//  全局状态
+// ============================================================
+const STATE = {
+  currentFile: null,        // 当前打开的文件路径 (相对路径)
+  currentFileType: null,    // texture / model / config / world-texture / message / yaml
+  editorMode: 'visual',     // visual / raw（仅 texture、model 支持）
+  files: [],                // 文件列表
+  tree: {},                 // 文件树
+  // texture editor state
+  config: { setting: {} },
+  selectedRingId: null,
+  selectedRingIds: [],
+  playing: false,
+  currentTime: 0,
+  totalDuration: 0,
+  axisHelperVisible: true,
+  gridVisible: true,
+  showAllRings: true,
+  viewMode: 'character',
+  ringMeshes: new Map(),
+  ringColors: ['#58a6ff', '#3fb950', '#d29922', '#bc8cff', '#f85149', '#ff7b72', '#79c0ff', '#7ee787', '#ffa657', '#d2a8ff'],
+  // model editor state
+  modelData: null,
+  // config editor state
+  configData: null,
+  configActiveTab: 'presets',
+  // world-texture editor state
+  worldTextureData: null,
+  // message editor state
+  messageData: null,
+  // raw yaml editor state
+  rawYamlContent: '',
+  // preset tree state
+  presetActivePath: null,
+  expandedDirs: new Set(),
+  // 预览模式状态
+  previewing: false,
+  previewReturnFile: null,
+  previewReturnFileType: null,
+};
+
+let ringIdCounter = 0;
+let texModalRingId = null;
+let texModalPreviewOnly = false;
+let saveTimer = null;
+let dragonCoreDir = '';
+let textureListCache = [];
+let textureBlobCache = [];
+let texExpandedDirs = new Set();
+let contextMenuFilePath = null;
+let threeInitialized = false;
+
+// ===== IndexedDB 贴图持久化 =====
+const TEX_DB_NAME = 'tuolingbloom_tex_db';
+const TEX_STORE = 'textures';
+function texIDBOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(TEX_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(TEX_STORE)) db.createObjectStore(TEX_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function texIDBSaveAll(entries) {
+  const db = await texIDBOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(TEX_STORE, 'readwrite');
+    const store = tx.objectStore(TEX_STORE);
+    store.clear();
+    entries.forEach(e => store.put(e.blob, e.path));
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+// 单独持久化单个贴图 blob（套贴图时调用，确保该贴图跨刷新仍可从 IndexedDB 恢复）
+async function texIDBSave(key, blob) {
+  const db = await texIDBOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(TEX_STORE, 'readwrite');
+    tx.objectStore(TEX_STORE).put(blob, key);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+async function texIDBLoadAll() {
+  const db = await texIDBOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(TEX_STORE, 'readonly');
+    const store = tx.objectStore(TEX_STORE);
+    const req = store.getAllKeys();
+    const blobs = {};
+    req.onsuccess = () => {
+      const keys = req.result || [];
+      let pending = keys.length;
+      if (pending === 0) { db.close(); resolve({}); return; }
+      keys.forEach(k => {
+        const r = store.get(k);
+        r.onsuccess = () => {
+          blobs[k] = r.result;
+          if (--pending === 0) { db.close(); resolve(blobs); }
+        };
+        r.onerror = () => { if (--pending === 0) { db.close(); resolve(blobs); } };
+      });
+    };
+    req.onerror = () => { db.close(); reject(req.error); };
+  });
+}
+
+// ===== 撤销系统 =====
+let undoStack = [];
+const UNDO_MAX = 50;
+let undoDebounceTimer = null;
+let undoPreSnapshot = null;
+
+function pushUndo() {
+  if (!STATE.config || !STATE.config.setting) return;
+  const snapshot = JSON.stringify(STATE.config);
+  if (undoStack.length > 0 && undoStack[undoStack.length - 1] === snapshot) return;
+  undoStack.push(snapshot);
+  if (undoStack.length > UNDO_MAX) undoStack.shift();
+  updateUndoButton();
+}
+
+function undo() {
+  if (undoDebounceTimer) {
+    clearTimeout(undoDebounceTimer);
+    undoDebounceTimer = null;
+    if (undoPreSnapshot) {
+      if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== undoPreSnapshot) {
+        undoStack.push(undoPreSnapshot);
+        if (undoStack.length > UNDO_MAX) undoStack.shift();
+      }
+      undoPreSnapshot = null;
+    }
+  }
+  if (undoStack.length === 0) { showToast('没有可撤销的操作', 'info'); return; }
+  const snapshot = undoStack.pop();
+  STATE.config = JSON.parse(snapshot);
+  const rings = getAllRings();
+  if (rings.length > 0) {
+    const exists = rings.some(r => r.id === STATE.selectedRingId);
+    if (!exists) {
+      STATE.selectedRingId = rings[0].id;
+      STATE.selectedRingIds = [STATE.selectedRingId];
+    }
+  } else {
+    STATE.selectedRingId = null;
+    STATE.selectedRingIds = [];
+  }
+  resolveTexturePaths();
+  rebuildAllRings();
+  updateShowAllButton();
+  renderSidebar();
+  updateTotalDuration();
+  updateAllRings();
+  updateTimelineUI();
+  scheduleAutoSave();
+  updateUndoButton();
+  showToast('已撤销', 'info');
+}
+
+function updateUndoButton() {
+  const btn = document.getElementById('undo-btn');
+  if (btn) {
+    btn.style.opacity = undoStack.length > 0 ? '1' : '0.4';
+    btn.style.pointerEvents = undoStack.length > 0 ? 'auto' : 'none';
+  }
+}
+
+function defaultTexture() {
+  return { 'translate-x': 0, 'translate-y': 2.35, 'translate-z': 0, 'rotate-x': 90, 'rotate-y': 0, 'rotate-z': 0, 'follow-player-eyes': false };
+}
+
+// ============================================================
+//  保存状态指示器
+// ============================================================
+function setSaveStatus(status) {
+  const el = document.getElementById('save-status');
+  const txt = document.getElementById('save-text');
+  el.classList.remove('saving', 'unsaved', 'error');
+  if (status === 'saving') { el.classList.add('saving'); txt.textContent = '保存中...'; }
+  else if (status === 'unsaved') { el.classList.add('unsaved'); txt.textContent = '未保存'; }
+  else if (status === 'error') { el.classList.add('error'); txt.textContent = '保存失败'; }
+  else if (status === 'none') { txt.textContent = ''; el.querySelector('.dot').style.display = 'none'; }
+  else { txt.textContent = '已保存'; el.querySelector('.dot').style.display = ''; }
+}
+
+// ============================================================
+//  自动保存（防抖 500ms）
+// ============================================================
+function scheduleAutoSave() {
+  if (!STATE.currentFile) return;
+  if (STATE.previewing) return; // 预览模式不保存
+  setSaveStatus('unsaved');
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => doSave(), 500);
+}
+
+function scheduleAutoSaveWithUndo() {
+  if (!undoPreSnapshot) undoPreSnapshot = JSON.stringify(STATE.config);
+  if (undoDebounceTimer) clearTimeout(undoDebounceTimer);
+  undoDebounceTimer = setTimeout(() => {
+    if (undoPreSnapshot) {
+      if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== undoPreSnapshot) {
+        undoStack.push(undoPreSnapshot);
+        if (undoStack.length > UNDO_MAX) undoStack.shift();
+        updateUndoButton();
+      }
+      undoPreSnapshot = null;
+    }
+    undoDebounceTimer = null;
+  }, 600);
+  scheduleAutoSave();
+}
+
+async function doSave() {
+  if (!STATE.currentFile) return;
+  setSaveStatus('saving');
+  try {
+    const content = serializeCurrentFileContent();
+    const resp = await fetch(`/api/files/${encodeURIComponent(STATE.currentFile)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    setSaveStatus('saved');
+  } catch (e) {
+    setSaveStatus('error');
+    showToast('自动保存失败: ' + e.message, 'error');
+  }
+}
+
+// 根据当前文件类型序列化内容
+function serializeCurrentFileContent() {
+  // 编辑文件模式下，保存原始 yaml 内容
+  if (STATE.editorMode === 'raw') return STATE.rawYamlContent;
+  switch (STATE.currentFileType) {
+    case 'texture': return serializeConfig();
+    case 'model': return serializeModel();
+    case 'config': return serializeMainConfig();
+    case 'world-texture': return serializeWorldTexture();
+    case 'message': return serializeMessage();
+    case 'yaml': return STATE.rawYamlContent;
+    default: return '';
+  }
+}
+
+// ============================================================
+//  文件类型检测
+// ============================================================
+function detectFileType(path) {
+  if (!path) return 'yaml';
+  const p = path.replace(/\\/g, '/').toLowerCase();
+  if (p === 'config.yml' || p.endsWith('/config.yml')) return 'config';
+  if (p === 'world-texture.yml' || p.endsWith('/world-texture.yml')) return 'world-texture';
+  if (p === 'message.yml' || p.endsWith('/message.yml')) return 'message';
+  if (p.startsWith('texture/')) return 'texture';
+  if (p.startsWith('model/')) return 'model';
+  return 'yaml';
+}
+
+function getFileIcon(path) {
+  const type = detectFileType(path);
+  switch (type) {
+    case 'texture': return '📦';
+    case 'model': return '🎭';
+    case 'config': return '⚙️';
+    case 'world-texture': return '🌍';
+    case 'message': return '💬';
+    default: return '📄';
+  }
+}
+
+// ============================================================
+//  文件浏览器 API
+// ============================================================
+async function fetchFiles() {
+  try {
+    const resp = await fetch('/api/files');
+    const data = await resp.json();
+    STATE.files = data.files || [];
+    STATE.tree = data.tree || {};
+    renderFileTree();
+  } catch (e) {
+    showToast('加载文件列表失败: ' + e.message, 'error');
+  }
+}
+
+async function refreshFileTree() {
+  await fetchFiles();
+  showToast('已刷新', 'info');
+}
+
+async function loadFile(path) {
+  try {
+    const resp = await fetch(`/api/files/${encodeURIComponent(path)}`);
+    if (!resp.ok) throw new Error('加载失败');
+    const data = await resp.json();
+    const content = data.content || '';
+    const fileType = detectFileType(path);
+    STATE.currentFile = path;
+    STATE.currentFileType = fileType;
+    document.getElementById('current-file-display').textContent = `${getFileIcon(path)} ${path}`;
+    // 根据文件类型切换编辑器
+    switchEditor(fileType, content);
+    setSaveStatus('saved');
+    showToast(`已加载: ${path}`, 'success');
+  } catch (e) {
+    showToast('加载文件失败: ' + e.message, 'error');
+  }
+}
+
+async function createFile(path, content) {
+  try {
+    const resp = await fetch('/api/files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, content: content || '' })
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || '创建失败');
+    }
+    await fetchFiles();
+    showToast(`文件 "${path}" 已创建`, 'success');
+    await loadFile(path);
+  } catch (e) {
+    showToast('创建文件失败: ' + e.message, 'error');
+  }
+}
+
+async function deleteFile(path) {
+  if (!confirm(`确定删除文件 "${path}"？`)) return;
+  try {
+    const resp = await fetch(`/api/files/${encodeURIComponent(path)}`, { method: 'DELETE' });
+    if (!resp.ok) throw new Error('删除失败');
+    if (STATE.currentFile === path) {
+      STATE.currentFile = null;
+      STATE.currentFileType = null;
+      document.getElementById('current-file-display').textContent = '未打开文件';
+      hideAllEditors();
+    }
+    await fetchFiles();
+    showToast(`文件 "${path}" 已删除`, 'warning');
+  } catch (e) {
+    showToast('删除失败: ' + e.message, 'error');
+  }
+}
+
+async function renameFile(oldPath) {
+  const newPath = prompt('请输入新文件路径:', oldPath);
+  if (!newPath || newPath.trim() === '' || newPath.trim() === oldPath) return;
+  try {
+    const resp = await fetch(`/api/files/${encodeURIComponent(oldPath)}/rename`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPath: newPath.trim() })
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || '重命名失败');
+    }
+    if (STATE.currentFile === oldPath) {
+      STATE.currentFile = newPath.trim();
+      document.getElementById('current-file-display').textContent = `${getFileIcon(newPath)} ${newPath.trim()}`;
+    }
+    await fetchFiles();
+    showToast(`已重命名为 "${newPath.trim()}"`, 'success');
+  } catch (e) {
+    showToast('重命名失败: ' + e.message, 'error');
+  }
+}
+
+async function duplicateFile(path) {
+  const dotIdx = path.lastIndexOf('.');
+  const newPath = path.slice(0, dotIdx) + '_副本' + path.slice(dotIdx);
+  try {
+    const resp = await fetch(`/api/files/${encodeURIComponent(path)}`);
+    if (!resp.ok) throw new Error('读取原文件失败');
+    const data = await resp.json();
+    await createFile(newPath, data.content || '');
+  } catch (e) {
+    showToast('复制失败: ' + e.message, 'error');
+  }
+}
+
+function downloadFile(path) {
+  fetch(`/api/files/${encodeURIComponent(path)}`)
+    .then(r => r.json())
+    .then(data => {
+      const blob = new Blob([data.content || ''], { type: 'text/yaml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = path.split('/').pop();
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('下载成功', 'success');
+    })
+    .catch(e => showToast('下载失败: ' + e.message, 'error'));
+}
+
+// ============================================================
+//  文件浏览器 UI 渲染
+// ============================================================
+function renderFileTree() {
+  const container = document.getElementById('fb-content');
+  if (STATE.files.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>暂无文件，点击「+ 新建」创建</p></div>';
+    return;
+  }
+  container.innerHTML = renderTreeNodes(STATE.tree, '');
+}
+
+function renderTreeNodes(node, prefix) {
+  let html = '';
+  const dirs = Object.keys(node).filter(k => node[k] !== 'file').sort();
+  const files = Object.keys(node).filter(k => node[k] === 'file').sort();
+  // 先渲染目录
+  dirs.forEach(dir => {
+    const childPath = prefix ? prefix + '/' + dir : dir;
+    const expanded = STATE.expandedDirs.has(childPath);
+    html += `<div class="fb-tree-item fb-tree-dir" onclick="toggleDir('${escapePath(childPath)}', event)">
+      <span class="fb-arrow ${expanded ? 'expanded' : ''}">▶</span>
+      <span class="fb-icon">📁</span>
+      <span class="fb-name">${escapeHtml(dir)}</span>
+    </div>`;
+    if (expanded) {
+      html += `<div class="fb-tree-children">${renderTreeNodes(node[dir], childPath)}</div>`;
+    }
+  });
+  // 再渲染文件
+  files.forEach(file => {
+    const filePath = prefix ? prefix + '/' + file : file;
+    const active = STATE.currentFile === filePath ? 'active' : '';
+    const icon = getFileIcon(filePath);
+    html += `<div class="fb-tree-item fb-tree-file ${active}" data-file-path="${escapeHtml(filePath)}" onclick="loadFile('${escapePath(filePath)}')" oncontextmenu="showContextMenu(event, '${escapePath(filePath)}')">
+      <span class="fb-arrow"></span>
+      <span class="fb-icon">${icon}</span>
+      <span class="fb-name">${escapeHtml(file)}</span>
+    </div>`;
+  });
+  return html;
+}
+
+function toggleDir(dirPath, event) {
+  if (event) event.stopPropagation();
+  if (STATE.expandedDirs.has(dirPath)) {
+    STATE.expandedDirs.delete(dirPath);
+  } else {
+    STATE.expandedDirs.add(dirPath);
+  }
+  renderFileTree();
+}
+
+function escapePath(p) {
+  return p.replace(/\\/g, '/').replace(/'/g, "\\'");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function toggleFileBrowser() {
+  document.getElementById('file-browser').classList.toggle('collapsed');
+}
+
+function toggleRingSidebar() {
+  document.getElementById('ring-sidebar').classList.toggle('collapsed');
+}
+
+// ============================================================
+//  Context Menu
+// ============================================================
+function showContextMenu(event, filePath) {
+  event.preventDefault();
+  event.stopPropagation();
+  contextMenuFilePath = filePath;
+  const menu = document.getElementById('context-menu');
+  menu.classList.add('show');
+  let x = event.clientX, y = event.clientY;
+  const rect = menu.getBoundingClientRect();
+  if (x + rect.width > window.innerWidth) x = window.innerWidth - rect.width - 4;
+  if (y + rect.height > window.innerHeight) y = window.innerHeight - rect.height - 4;
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+}
+
+function hideContextMenu() {
+  document.getElementById('context-menu').classList.remove('show');
+  contextMenuFilePath = null;
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.context-menu')) hideContextMenu();
+});
+
+document.querySelectorAll('.context-menu .cm-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const action = item.dataset.action;
+    const path = contextMenuFilePath;
+    hideContextMenu();
+    if (!path) return;
+    if (action === 'rename') renameFile(path);
+    else if (action === 'delete') deleteFile(path);
+    else if (action === 'duplicate') duplicateFile(path);
+    else if (action === 'download') downloadFile(path);
+  });
+});
+
+// ============================================================
+//  编辑器切换
+// ============================================================
+function hideAllEditors() {
+  document.getElementById('texture-editor').classList.add('hidden');
+  document.getElementById('form-editor').classList.add('hidden');
+  document.getElementById('show-all-btn').style.display = 'none';
+  document.getElementById('undo-btn').style.display = 'none';
+  document.getElementById('view-mode-divider').style.display = 'none';
+  document.getElementById('mode-texture').style.display = 'none';
+  document.getElementById('mode-character').style.display = 'none';
+  document.getElementById('editor-mode-divider').style.display = 'none';
+  document.getElementById('toggle-editor-mode').style.display = 'none';
+}
+
+function switchEditor(fileType, content) {
+  hideAllEditors();
+  STATE.editorMode = 'visual';
+  // texture 和 model 支持可视化/编辑文件切换
+  if (fileType === 'texture' || fileType === 'model') {
+    document.getElementById('editor-mode-divider').style.display = '';
+    document.getElementById('toggle-editor-mode').style.display = '';
+    updateEditorModeButton();
+  }
+  if (fileType === 'texture') {
+    document.getElementById('texture-editor').classList.remove('hidden');
+    document.getElementById('show-all-btn').style.display = '';
+    document.getElementById('undo-btn').style.display = '';
+    document.getElementById('view-mode-divider').style.display = '';
+    document.getElementById('mode-texture').style.display = '';
+    document.getElementById('mode-character').style.display = '';
+    if (!threeInitialized) {
+      init3D();
+      threeInitialized = true;
+    }
+    loadTextureFile(content);
+  } else {
+    document.getElementById('form-editor').classList.remove('hidden');
+    loadFormEditor(fileType, content);
+  }
+}
+
+function updateEditorModeButton() {
+  const btn = document.getElementById('toggle-editor-mode');
+  if (!btn) return;
+  if (STATE.editorMode === 'visual') {
+    btn.textContent = '编辑文件';
+    btn.classList.remove('active-mode');
+  } else {
+    btn.textContent = '可视化编辑';
+    btn.classList.add('active-mode');
+  }
+}
+
+function toggleEditorMode() {
+  if (STATE.currentFileType !== 'texture' && STATE.currentFileType !== 'model') return;
+  if (STATE.editorMode === 'visual') {
+    // 可视化 → 编辑文件：序列化当前内容到 rawYamlContent
+    STATE.rawYamlContent = serializeCurrentFileContent();
+    STATE.editorMode = 'raw';
+    if (STATE.currentFileType === 'texture') {
+      // texture-editor 隐藏，form-editor 显示原始 yaml
+      document.getElementById('texture-editor').classList.add('hidden');
+      document.getElementById('show-all-btn').style.display = 'none';
+      document.getElementById('undo-btn').style.display = 'none';
+      document.getElementById('view-mode-divider').style.display = 'none';
+      document.getElementById('mode-texture').style.display = 'none';
+      document.getElementById('mode-character').style.display = 'none';
+      document.getElementById('form-editor').classList.remove('hidden');
+      document.getElementById('form-editor').innerHTML = renderRawYamlEditor();
+      attachRawYamlEvents();
+    } else {
+      // model：同一个 form-editor，切换内容为原始 yaml
+      document.getElementById('form-editor').innerHTML = renderRawYamlEditor();
+      attachRawYamlEvents();
+    }
+    updateEditorModeButton();
+    showToast('已切换到编辑文件模式', 'info');
+  } else {
+    // 编辑文件 → 可视化：从 rawYamlContent 重新解析
+    const rawContent = document.getElementById('raw-yaml-textarea') ? document.getElementById('raw-yaml-textarea').value : STATE.rawYamlContent;
+    STATE.rawYamlContent = rawContent;
+    STATE.editorMode = 'visual';
+    if (STATE.currentFileType === 'texture') {
+      document.getElementById('form-editor').classList.add('hidden');
+      switchEditor('texture', rawContent);
+    } else {
+      // model：重新加载 model 表单
+      loadFormEditor('model', rawContent);
+    }
+    updateEditorModeButton();
+    showToast('已切换到可视化编辑模式', 'info');
+  }
+}
+
+// ============================================================
+//  Texture Editor (3D Animation Editor) — kept from old editor
+// ============================================================
+async function loadTextureFile(content) {
+  let config;
+  try {
+    config = parseYML(content);
+  } catch (e) {
+    console.error('[loadTextureFile] parseYML 失败:', e);
+    showToast('解析贴图配置失败: ' + e.message, 'error');
+    return;
+  }
+  STATE.config = config;
+  const firstKey = Object.keys(config.setting)[0];
+  STATE.selectedRingId = firstKey ? config.setting[firstKey].id : null;
+  STATE.selectedRingIds = STATE.selectedRingId != null ? [STATE.selectedRingId] : [];
+  STATE.showAllRings = false;
+  STATE.currentTime = 0;
+  STATE.playing = false;
+  undoStack = [];
+  updateUndoButton();
+  try {
+    await loadPreviewTex();
+    resolveTexturePaths();
+    rebuildAllRings();
+  } catch (e) {
+    console.error('[loadTextureFile] rebuildAllRings 失败:', e);
+    showToast('3D 渲染失败: ' + e.message, 'error');
+  }
+  updateShowAllButton();
+  renderSidebar();
+  setViewMode('character');
+  setSaveStatus('saved');
+}
+
+function parseYML(ymlText) {
+  const doc = jsyaml.load(ymlText);
+  if (!doc) throw new Error('YML 解析失败');
+  const setting = doc.setting || doc.animations || {};
+  const config = { setting: {} };
+  const keys = Object.keys(setting).sort((a, b) => parseInt(a) - parseInt(b));
+  keys.forEach((key, idx) => {
+    const rd = setting[key];
+    const ring = {
+      id: ++ringIdCounter, name: `魂环 ${key}`, number: key,
+      delay: (rd.delay ?? 0),
+      color: STATE.ringColors[idx % STATE.ringColors.length],
+      imageUrl: '', previewTexPath: '', texture: null, animations: { translate: [], scale: [], rotate: [] }
+    };
+    const texSrc = rd.texture || {};
+    ring.texture = {
+      'translate-x': texSrc['translate-x'] ?? 0, 'translate-y': texSrc['translate-y'] ?? 0, 'translate-z': texSrc['translate-z'] ?? 0,
+      'rotate-x': texSrc['rotate-x'] ?? 0, 'rotate-y': texSrc['rotate-y'] ?? 0, 'rotate-z': texSrc['rotate-z'] ?? 0,
+      'follow-player-eyes': texSrc['follow-player-eyes'] ?? false
+    };
+    // 兼容老配置：把 YML 里的 path 迁移到 previewTexPath（仅用于 3D 预览，不写回 YML）
+    if (texSrc['path']) ring.previewTexPath = texSrc['path'];
+    const anims = rd.animations || {};
+    if (anims['translate-animation']) ring.animations.translate.push(parseTranslateAnim(anims['translate-animation']));
+    if (anims['translate-animations']) ring.animations.translate = anims['translate-animations'].map(parseTranslateAnim);
+    if (anims['scale-animation']) ring.animations.scale.push(parseScaleAnim(anims['scale-animation']));
+    if (anims['scale-animations']) ring.animations.scale = anims['scale-animations'].map(parseScaleAnim);
+    if (anims['rotate-animation']) ring.animations.rotate.push(parseRotateAnim(anims['rotate-animation']));
+    if (anims['rotate-animations']) ring.animations.rotate = anims['rotate-animations'].map(parseRotateAnim);
+    config.setting[key] = ring;
+  });
+  return config;
+}
+
+function parseTranslateAnim(d) { return { direction: d.direction || 'z', delay: d.delay ?? 0, distance: d.distance ?? 0, duration: d.duration ?? 3000, cycleCount: d['cycle-count'] ?? 1, fixed: d.fixed ?? true }; }
+function parseScaleAnim(d) { return { delay: d.delay ?? 0, fromScale: d['from-scale'] ?? 4, toScale: d['to-scale'] ?? 1, duration: d.duration ?? 3000, cycleCount: d['cycle-count'] ?? 1, fixed: d.fixed ?? true, resetTime: d.resetTime ?? 0 }; }
+function parseRotateAnim(d) { return { direction: d.direction || 'z', delay: d.delay ?? 0, angle: d.angle ?? 360, duration: d.duration ?? 6000, cycleCount: d['cycle-count'] ?? -1, fixed: d.fixed ?? false }; }
+
+function serializeConfig() {
+  const out = { setting: {} };
+  const keys = Object.keys(STATE.config.setting).sort((a, b) => parseInt(a) - parseInt(b));
+  keys.forEach(key => {
+    const ring = STATE.config.setting[key];
+    const ringOut = { delay: ring.delay, texture: { ...ring.texture }, animations: {} };
+    if (ring.animations.translate.length === 1) ringOut.animations['translate-animation'] = serializeTranslateAnim(ring.animations.translate[0]);
+    else if (ring.animations.translate.length > 1) ringOut.animations['translate-animations'] = ring.animations.translate.map(serializeTranslateAnim);
+    if (ring.animations.scale.length === 1) ringOut.animations['scale-animation'] = serializeScaleAnim(ring.animations.scale[0]);
+    else if (ring.animations.scale.length > 1) ringOut.animations['scale-animations'] = ring.animations.scale.map(serializeScaleAnim);
+    if (ring.animations.rotate.length === 1) ringOut.animations['rotate-animation'] = serializeRotateAnim(ring.animations.rotate[0]);
+    else if (ring.animations.rotate.length > 1) ringOut.animations['rotate-animations'] = ring.animations.rotate.map(serializeRotateAnim);
+    out.setting[key] = ringOut;
+  });
+  let yml = jsyaml.dump(out, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"' });
+  yml = yml.replace(/^(\s*)"(\d+)":/gm, '$1$2:');
+  return yml;
+}
+
+function serializeTranslateAnim(a) { return { direction: a.direction, delay: a.delay, distance: a.distance, duration: a.duration, 'cycle-count': a.cycleCount, fixed: a.fixed }; }
+function serializeScaleAnim(a) { return { delay: a.delay, 'from-scale': a.fromScale, 'to-scale': a.toScale, duration: a.duration, 'cycle-count': a.cycleCount, fixed: a.fixed, resetTime: a.resetTime }; }
+function serializeRotateAnim(a) { return { direction: a.direction, delay: a.delay, angle: a.angle, duration: a.duration, 'cycle-count': a.cycleCount, fixed: a.fixed }; }
+
+function exportYML() {
+  if (!STATE.currentFile) { showToast('未打开文件', 'warning'); return; }
+  const content = serializeCurrentFileContent();
+  const blob = new Blob([content], { type: 'text/yaml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (STATE.currentFile.split('/').pop() || 'export').replace(/\.ya?ml$/i, '') + '.yml';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('YML 导出成功', 'success');
+}
+
+// ============================================================
+//  Three.js 3D 场景 (kept from old editor)
+// ============================================================
+let scene, camera, renderer, clock;
+let playerGroup, axisHelper, gridHelper;
+let alignHelperGroup = null;
+let heightPoleGroup = null;
+let bboxGroup = null;
+let canvas;
+let camAngleX = 0.35, camAngleY = 0.5, camDist = 7;
+let isOrbiting = false, lastMouseX = 0, lastMouseY = 0;
+let raycaster, mouseNDC;
+const ALIGN_THRESHOLD = 0.05;
+
+const DRAG = {
+  active: false, mode: null, ringId: null,
+  startMouseX: 0, startMouseY: 0,
+  startRingWorldPos: null, startHitPoint: null,
+  startRotX: 0, startRotY: 0, startRotZ: 0,
+  startTex: null,
+};
+
+function init3D() {
+  canvas = document.getElementById('canvas3d');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0e14);
+  scene.fog = new THREE.Fog(0x0a0e14, 15, 45);
+  camera = new THREE.PerspectiveCamera(70, canvas.clientWidth / Math.max(canvas.clientHeight, 1), 0.1, 100);
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  resizeRenderer();
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+  dirLight.position.set(5, 10, 7); scene.add(dirLight);
+  gridHelper = new THREE.GridHelper(20, 20, 0x30363d, 0x21262d);
+  scene.add(gridHelper);
+  createWorldAxisHelper();
+  playerGroup = createPlayerModel();
+  scene.add(playerGroup);
+  clock = new THREE.Clock();
+  raycaster = new THREE.Raycaster();
+  mouseNDC = new THREE.Vector2();
+  canvas.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('wheel', onWheel, { passive: false });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  window.addEventListener('resize', resizeRenderer);
+  updateCamera();
+  animate();
+}
+
+function createPlayerModel() {
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x4a9eff, transparent: true, opacity: 0.6 });
+  const limbMat = new THREE.MeshLambertMaterial({ color: 0x3a7ec4, transparent: true, opacity: 0.6 });
+  const headMat = new THREE.MeshLambertMaterial({ color: 0x5ab0ff, transparent: true, opacity: 0.6 });
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), headMat); head.position.set(0, 1.75, 0); group.add(head);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.75, 0.25), bodyMat); body.position.set(0, 1.125, 0); group.add(body);
+  const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.75, 0.25), limbMat); leftArm.position.set(-0.375, 1.125, 0); group.add(leftArm);
+  const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.75, 0.25), limbMat); rightArm.position.set(0.375, 1.125, 0); group.add(rightArm);
+  const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.75, 0.25), limbMat); leftLeg.position.set(-0.125, 0.375, 0); group.add(leftLeg);
+  const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.75, 0.25), limbMat); rightLeg.position.set(0.125, 0.375, 0); group.add(rightLeg);
+  group.add(createBackLabel());
+  return group;
+}
+
+function createBackLabel() {
+  const cvs = document.createElement('canvas');
+  cvs.width = 256; cvs.height = 128;
+  const ctx = cvs.getContext('2d');
+  ctx.fillStyle = 'rgba(88,166,255,0.25)'; ctx.fillRect(0, 0, 256, 128);
+  ctx.strokeStyle = 'rgba(88,166,255,0.6)'; ctx.lineWidth = 4; ctx.strokeRect(4, 4, 248, 120);
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 72px "Microsoft YaHei", "SimHei", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('后背', 128, 64);
+  const tex = new THREE.CanvasTexture(cvs);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.24), mat);
+  plane.position.set(0, 1.15, -0.14);
+  return plane;
+}
+
+function createWorldAxisHelper() {
+  axisHelper = new THREE.Group();
+  const len = 3;
+  const axes = [
+    { dir: new THREE.Vector3(1,0,0), color: 0xff5555 },
+    { dir: new THREE.Vector3(0,1,0), color: 0x55ff55 },
+    { dir: new THREE.Vector3(0,0,1), color: 0x5599ff }
+  ];
+  axes.forEach(a => {
+    const end = a.dir.clone().multiplyScalar(len);
+    const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), end]);
+    const line = new THREE.Line(geom, new THREE.LineBasicMaterial({ color: a.color }));
+    axisHelper.add(line);
+    const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 8), new THREE.MeshBasicMaterial({ color: a.color }));
+    arrow.position.copy(end);
+    if (a.dir.x) arrow.rotation.z = -Math.PI/2;
+    if (a.dir.z) arrow.rotation.x = Math.PI/2;
+    axisHelper.add(arrow);
+  });
+  scene.add(axisHelper);
+}
+
+function getAllRings() {
+  return Object.values(STATE.config.setting).sort((a, b) => parseInt(a.number) - parseInt(b.number));
+}
+
+function createRingMesh(ring) {
+  const tg = new THREE.Group();
+  tg.name = 'transform-group'; tg.userData = { ringId: ring.id };
+  const tex = ring.texture;
+  tg.position.set(tex['translate-x'] || 0, tex['translate-y'] || 0, tex['translate-z'] || 0);
+  tg.rotation.set(THREE.MathUtils.degToRad(tex['rotate-x'] || 0), THREE.MathUtils.degToRad(tex['rotate-y'] || 0), THREE.MathUtils.degToRad(tex['rotate-z'] || 0));
+  const ag = new THREE.Group(); ag.name = 'anim-group'; tg.add(ag);
+
+  let ringMesh, glowMesh;
+  if (ring.imageUrl) {
+    const texLoader = new THREE.TextureLoader();
+    const imgTex = texLoader.load(
+      ring.imageUrl,
+      (texture) => {
+        const w = texture.image && texture.image.width;
+        const h = texture.image && texture.image.height;
+        if (w && h && ringMesh && ringMesh.geometry) {
+          const ratio = w / h;
+          ringMesh.geometry.dispose();
+          ringMesh.geometry = new THREE.PlaneGeometry(ratio, 1);
+        }
+      },
+      undefined,
+      () => {
+        // 加载失败：回退为圆环
+        if (ringMesh) {
+          ringMesh.geometry.dispose();
+          ringMesh.geometry = new THREE.TorusGeometry(0.5, 0.04, 16, 64);
+          if (ringMesh.material) {
+            ringMesh.material.map = null;
+            ringMesh.material.color = new THREE.Color(ring.color);
+            ringMesh.material.opacity = 0.85;
+            ringMesh.material.needsUpdate = true;
+          }
+        }
+      }
+    );
+    imgTex.magFilter = THREE.LinearFilter;
+    imgTex.minFilter = THREE.LinearMipmapLinearFilter;
+    imgTex.generateMipmaps = true;
+    imgTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    imgTex.colorSpace = THREE.SRGBColorSpace;
+    imgTex.needsUpdate = true;
+    const mat = new THREE.MeshBasicMaterial({ map: imgTex, transparent: true, opacity: 1.0, side: THREE.DoubleSide, depthTest: true, depthWrite: false });
+    ringMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+    ringMesh.name = 'ring-body'; ag.add(ringMesh);
+  } else {
+    const mat = new THREE.MeshBasicMaterial({ color: ring.color, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+    ringMesh = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.04, 16, 64), mat);
+    ringMesh.name = 'ring-body'; ag.add(ringMesh);
+    const glowMat = new THREE.MeshBasicMaterial({ color: ring.color, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+    glowMesh = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.075, 12, 64), glowMat);
+    glowMesh.name = 'ring-glow'; ag.add(glowMesh);
+  }
+  return tg;
+}
+
+function rebuildAllRings() {
+  STATE.ringMeshes.forEach(mesh => { if (playerGroup) playerGroup.remove(mesh); mesh.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); }); });
+  STATE.ringMeshes.clear();
+  if (!playerGroup) return;
+  getAllRings().forEach(ring => {
+    const mesh = createRingMesh(ring);
+    mesh.visible = STATE.showAllRings || STATE.selectedRingIds.includes(ring.id) || (ring.id === STATE.selectedRingId);
+    playerGroup.add(mesh);
+    STATE.ringMeshes.set(ring.id, mesh);
+  });
+  updateTotalDuration();
+  updateAllRings();
+}
+
+function updateRingVisibility() {
+  STATE.ringMeshes.forEach((mesh, ringId) => {
+    mesh.visible = STATE.showAllRings || STATE.selectedRingIds.includes(ringId) || (ringId === STATE.selectedRingId);
+  });
+}
+
+function updateRingTexture(ringId) {
+  const ring = getAllRings().find(r => r.id === ringId);
+  if (!ring) return;
+  const tg = STATE.ringMeshes.get(ringId);
+  if (!tg) return;
+  const tex = ring.texture;
+  tg.position.set(tex['translate-x'] || 0, tex['translate-y'] || 0, tex['translate-z'] || 0);
+  tg.rotation.set(THREE.MathUtils.degToRad(tex['rotate-x'] || 0), THREE.MathUtils.degToRad(tex['rotate-y'] || 0), THREE.MathUtils.degToRad(tex['rotate-z'] || 0));
+}
+
+function getRingCumulativeDelayMs(ringId) {
+  const rings = getAllRings();
+  let cumulative = 0;
+  for (const ring of rings) {
+    cumulative += (ring.delay || 0) * 1000;
+    if (ring.id === ringId) break;
+  }
+  return cumulative;
+}
+
+function updateTotalDuration() {
+  let maxEnd = 0;
+  getAllRings().forEach(ring => {
+    const ringDelayMs = getRingCumulativeDelayMs(ring.id);
+    [...ring.animations.translate, ...ring.animations.scale, ...ring.animations.rotate].forEach(a => {
+      const dur = a.duration || 0;
+      const delay = (a.delay || 0) + ringDelayMs;
+      const cycles = a.cycleCount === -1 ? 1 : (a.cycleCount || 1);
+      const end = delay + dur * cycles;
+      if (end > maxEnd) maxEnd = end;
+    });
+  });
+  STATE.totalDuration = maxEnd;
+}
+
+function updateRingAnimation(ringId, time) {
+  const tg = STATE.ringMeshes.get(ringId);
+  if (!tg) return;
+  const ring = getAllRings().find(r => r.id === ringId);
+  if (!ring) return;
+  const ag = tg.getObjectByName('anim-group');
+  if (!ag) return;
+  const ringBody = ag.getObjectByName('ring-body');
+  if (!ringBody) return;
+  const ringDelayMs = getRingCumulativeDelayMs(ring.id);
+  const ringStarted = time >= ringDelayMs;
+  if (!ringStarted) {
+    ringBody.visible = false;
+    const ringGlow0 = ag.getObjectByName('ring-glow');
+    if (ringGlow0) ringGlow0.visible = false;
+    return;
+  }
+  ringBody.visible = true;
+  const ringGlow0 = ag.getObjectByName('ring-glow');
+  if (ringGlow0) ringGlow0.visible = true;
+  ag.position.set(0, 0, 0); ag.rotation.set(0, 0, 0);
+  let currentScale = 1;
+  let posOffset = { x: 0, y: 0, z: 0 };
+  let rotOffset = { x: 0, y: 0, z: 0 };
+
+  ring.animations.scale.forEach(a => {
+    const dur = a.duration || 0;
+    const delay = (a.delay || 0) + ringDelayMs;
+    const start = delay; const end = start + dur;
+    if (time >= start && dur > 0) {
+      let progress;
+      if (a.cycleCount === -1) progress = ((time - start) % dur) / dur;
+      else if (time < end) progress = (time - start) / dur;
+      else progress = 1;
+      currentScale *= a.fromScale + (a.toScale - a.fromScale) * progress;
+    } else if (time < start) { currentScale *= a.fromScale; }
+  });
+
+  ring.animations.translate.forEach(a => {
+    const dur = a.duration || 0;
+    const delay = (a.delay || 0) + ringDelayMs;
+    const start = delay; const end = start + dur;
+    let val = 0;
+    if (time >= start && dur > 0) {
+      let progress;
+      if (a.cycleCount === -1) progress = ((time - start) % dur) / dur;
+      else if (time < end) progress = (time - start) / dur;
+      else progress = 1;
+      val = (a.distance || 0) * progress;
+    } else if (time >= end) { val = a.distance || 0; }
+    const dir = a.direction || 'z';
+    if (dir === 'x') posOffset.x += val; else if (dir === 'y') posOffset.y += val; else if (dir === 'z') posOffset.z += val;
+  });
+
+  ring.animations.rotate.forEach(a => {
+    const dur = a.duration || 0;
+    const delay = (a.delay || 0) + ringDelayMs;
+    const start = delay; const end = start + dur;
+    if (time >= start && dur > 0) {
+      let progress;
+      if (a.cycleCount === -1) progress = ((time - start) % dur) / dur;
+      else if (time < end) progress = (time - start) / dur;
+      else progress = 1;
+      const angleRad = THREE.MathUtils.degToRad(a.angle || 0) * progress;
+      const dir = a.direction || 'z';
+      if (dir === 'x') rotOffset.x += angleRad; else if (dir === 'y') rotOffset.y += angleRad; else if (dir === 'z') rotOffset.z += angleRad;
+    }
+  });
+
+  ag.position.set(posOffset.x, posOffset.y, posOffset.z);
+  ag.rotation.set(rotOffset.x, rotOffset.y, rotOffset.z);
+  ringBody.scale.setScalar(currentScale);
+  const ringGlow = ag.getObjectByName('ring-glow');
+  if (ringGlow) ringGlow.scale.setScalar(currentScale);
+}
+
+function togglePlay() {
+  STATE.playing = !STATE.playing;
+  const btn = document.getElementById('play-btn');
+  if (STATE.playing) { btn.textContent = '⏸'; btn.classList.add('pause'); if (STATE.currentTime >= STATE.totalDuration) STATE.currentTime = 0; }
+  else { btn.textContent = '▶'; btn.classList.remove('pause'); }
+}
+
+function resetAnimation() {
+  STATE.currentTime = 0; STATE.playing = false;
+  const btn = document.getElementById('play-btn');
+  btn.textContent = '▶'; btn.classList.remove('pause');
+  updateAllRings(); updateTimelineUI();
+}
+
+function updateAllRings() { STATE.ringMeshes.forEach((mesh, ringId) => updateRingAnimation(ringId, STATE.currentTime)); }
+
+function seekTimeline(event) {
+  const bar = document.getElementById('timeline-bar');
+  const rect = bar.getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+  STATE.currentTime = ratio * STATE.totalDuration;
+  updateAllRings(); updateTimelineUI();
+}
+
+function updateTimelineUI() {
+  const ratio = STATE.totalDuration > 0 ? STATE.currentTime / STATE.totalDuration : 0;
+  const pct = Math.max(0, Math.min(100, ratio * 100));
+  document.getElementById('timeline-progress').style.width = pct + '%';
+  document.getElementById('timeline-cursor').style.left = pct + '%';
+  document.getElementById('time-display').textContent = `${(STATE.currentTime / 1000).toFixed(1)}s / ${(STATE.totalDuration / 1000).toFixed(1)}s`;
+}
+
+function toggleShowAll() {
+  STATE.showAllRings = !STATE.showAllRings;
+  if (STATE.showAllRings) {
+    // 全部绽放：选中所有魂环
+    STATE.selectedRingIds = getAllRings().map(r => r.id);
+  }
+  updateShowAllButton();
+  updateRingVisibility();
+  renderSidebar();
+  showToast(STATE.showAllRings ? '全部魂环已显示' : '仅显示选中的魂环', 'info');
+}
+
+function updateShowAllButton() {
+  const btn = document.getElementById('show-all-btn');
+  if (!btn) return;
+  btn.textContent = STATE.showAllRings ? '全部绽放' : '只显选中';
+  btn.classList.add('btn-green');
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  if (!renderer || !clock) return;
+  const delta = clock.getDelta();
+  if (STATE.playing) {
+    STATE.currentTime += delta * 1000;
+    if (STATE.currentTime >= STATE.totalDuration) {
+      STATE.currentTime = STATE.totalDuration; STATE.playing = false;
+      const btn = document.getElementById('play-btn');
+      if (btn) { btn.textContent = '▶'; btn.classList.remove('pause'); }
+    }
+  }
+  updateAllRings(); updateTimelineUI();
+  rebuildHeightPoles();
+  rebuildBBoxes();
+  if (alignHelperGroup) alignHelperGroup.traverse(obj => { if (obj.material && obj.material.map) obj.lookAt(camera.position); });
+  if (heightPoleGroup) heightPoleGroup.traverse(obj => { if (obj.material && obj.material.map) obj.lookAt(camera.position); });
+  if (bboxGroup) bboxGroup.traverse(obj => { if (obj.material && obj.material.map) obj.lookAt(camera.position); });
+  renderer.render(scene, camera);
+}
+
+function resizeRenderer() {
+  if (!canvas || !renderer || !camera) return;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w === 0 || h === 0) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+
+function updateCamera() {
+  const x = camDist * Math.cos(camAngleX) * Math.sin(camAngleY);
+  const y = camDist * Math.sin(camAngleX);
+  const z = camDist * Math.cos(camAngleX) * Math.cos(camAngleY);
+  camera.position.set(x, y, z); camera.lookAt(0, 1.2, 0);
+}
+
+function toggleAxisHelper() { STATE.axisHelperVisible = !STATE.axisHelperVisible; if (axisHelper) axisHelper.visible = STATE.axisHelperVisible; }
+function toggleGrid() { STATE.gridVisible = !STATE.gridVisible; if (gridHelper) gridHelper.visible = STATE.gridVisible; }
+
+function setViewMode(mode) {
+  STATE.viewMode = mode;
+  document.getElementById('mode-texture').classList.toggle('active-mode', mode === 'texture');
+  document.getElementById('mode-character').classList.toggle('active-mode', mode === 'character');
+  const title = document.getElementById('view-mode-title');
+  const h1 = document.getElementById('hint-tex-1');
+  const h2 = document.getElementById('hint-tex-2');
+  const h3 = document.getElementById('hint-tex-3');
+  const hc = document.getElementById('hint-char');
+  if (mode === 'texture') {
+    title.textContent = '修改模式';
+    h1.style.display = ''; h2.style.display = ''; h3.style.display = ''; hc.style.display = 'none';
+  } else {
+    title.textContent = '人物模式';
+    h1.style.display = 'none'; h2.style.display = 'none'; h3.style.display = 'none'; hc.style.display = '';
+  }
+}
+
+function onMouseDown(e) {
+  const rect = canvas.getBoundingClientRect();
+  mouseNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouseNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouseNDC, camera);
+  if (STATE.viewMode === 'character') {
+    if (e.button === 0 || e.button === 2) { isOrbiting = true; lastMouseX = e.clientX; lastMouseY = e.clientY; }
+    return;
+  }
+  if (e.button === 0 && STATE.selectedRingId != null) {
+    const ring = getAllRings().find(r => r.id === STATE.selectedRingId);
+    if (!ring) { isOrbiting = true; lastMouseX = e.clientX; lastMouseY = e.clientY; return; }
+    const tg = STATE.ringMeshes.get(STATE.selectedRingId);
+    if (!tg) { isOrbiting = true; lastMouseX = e.clientX; lastMouseY = e.clientY; return; }
+    pushUndo();
+    if (e.shiftKey) {
+      DRAG.active = true; DRAG.mode = 'rotate-xy'; DRAG.ringId = STATE.selectedRingId;
+      DRAG.startMouseX = e.clientX; DRAG.startMouseY = e.clientY;
+      DRAG.startRotX = ring.texture['rotate-x'] || 0; DRAG.startRotY = ring.texture['rotate-y'] || 0;
+      canvas.style.cursor = 'grabbing';
+    } else if (e.ctrlKey) {
+      DRAG.active = true; DRAG.mode = 'rotate-z'; DRAG.ringId = STATE.selectedRingId;
+      DRAG.startMouseX = e.clientX; DRAG.startMouseY = e.clientY;
+      DRAG.startRotZ = ring.texture['rotate-z'] || 0;
+      canvas.style.cursor = 'grabbing';
+    } else {
+      const worldPos = new THREE.Vector3(); tg.getWorldPosition(worldPos);
+      const camDir = new THREE.Vector3(); camera.getWorldDirection(camDir);
+      const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir.negate(), worldPos);
+      const hitPoint = new THREE.Vector3();
+      const got = raycaster.ray.intersectPlane(plane, hitPoint);
+      if (!got) { isOrbiting = true; lastMouseX = e.clientX; lastMouseY = e.clientY; return; }
+      DRAG.active = true; DRAG.mode = 'translate'; DRAG.ringId = STATE.selectedRingId;
+      DRAG.startMouseX = e.clientX; DRAG.startMouseY = e.clientY;
+      DRAG.startRingWorldPos = worldPos.clone(); DRAG.startHitPoint = hitPoint.clone();
+      DRAG.startTex = { x: ring.texture['translate-x'] || 0, y: ring.texture['translate-y'] || 0, z: ring.texture['translate-z'] || 0 };
+      canvas.style.cursor = 'grabbing';
+    }
+    return;
+  }
+  if (e.button === 0 || e.button === 2) { isOrbiting = true; lastMouseX = e.clientX; lastMouseY = e.clientY; }
+}
+
+function onMouseMove(e) {
+  if (DRAG.active) { handleTextureDrag(e); return; }
+  if (!isOrbiting) { if (canvas) canvas.style.cursor = (STATE.selectedRingId != null && STATE.viewMode === 'texture') ? 'grab' : ''; return; }
+  camAngleY -= (e.clientX - lastMouseX) * 0.01;
+  camAngleX += (e.clientY - lastMouseY) * 0.01;
+  camAngleX = Math.max(-1.4, Math.min(1.5, camAngleX));
+  lastMouseX = e.clientX; lastMouseY = e.clientY;
+  updateCamera();
+}
+
+function onMouseUp() {
+  if (DRAG.active) { DRAG.active = false; DRAG.mode = null; if (canvas) canvas.style.cursor = ''; hideDragHint(); hideAlignHelper(); scheduleAutoSave(); return; }
+  isOrbiting = false;
+}
+
+function onWheel(e) { e.preventDefault(); camDist += e.deltaY * 0.01; camDist = Math.max(3, Math.min(25, camDist)); updateCamera(); }
+
+function handleTextureDrag(e) {
+  const ring = getAllRings().find(r => r.id === DRAG.ringId);
+  if (!ring) return;
+  const tg = STATE.ringMeshes.get(DRAG.ringId);
+  if (!tg) return;
+  if (DRAG.mode === 'translate') {
+    const rect = canvas.getBoundingClientRect();
+    mouseNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouseNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+    const camDir = new THREE.Vector3(); camera.getWorldDirection(camDir);
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir.negate(), DRAG.startRingWorldPos);
+    const hitPoint = new THREE.Vector3();
+    const got = raycaster.ray.intersectPlane(plane, hitPoint);
+    if (!got) return;
+    const delta = hitPoint.clone().sub(DRAG.startHitPoint);
+    const newPos = DRAG.startRingWorldPos.clone().add(delta);
+    let newY = Math.round(newPos.y * 100) / 100;
+
+    let snapped = false;
+    let snapTargetY = null, snapTargetX = null, snapTargetZ = null;
+    const dragBox = new THREE.Box3().setFromObject(tg);
+    const dragTopOffset = dragBox.max.y - DRAG.startRingWorldPos.y;
+    const dragTopY = Math.round((newPos.y + dragTopOffset) * 100) / 100;
+    const dragCenterX = Math.round(newPos.x * 100) / 100;
+    const dragCenterZ = Math.round(newPos.z * 100) / 100;
+    const snapAxes = [];
+    getAllRings().forEach(other => {
+      if (other.id === DRAG.ringId) return;
+      const otherTg = STATE.ringMeshes.get(other.id);
+      if (!otherTg) return;
+      const otherBox = new THREE.Box3().setFromObject(otherTg);
+      const otherTopY = Math.round(otherBox.max.y * 100) / 100;
+      const otherCenterX = Math.round(((otherBox.min.x + otherBox.max.x) / 2) * 100) / 100;
+      const otherCenterZ = Math.round(((otherBox.min.z + otherBox.max.z) / 2) * 100) / 100;
+      if (Math.abs(dragTopY - otherTopY) < ALIGN_THRESHOLD) { snapped = true; snapTargetY = otherTopY; if (!snapAxes.includes('y')) snapAxes.push('y'); }
+      if (Math.abs(dragCenterX - otherCenterX) < ALIGN_THRESHOLD) { snapped = true; snapTargetX = otherCenterX; if (!snapAxes.includes('x')) snapAxes.push('x'); }
+      if (Math.abs(dragCenterZ - otherCenterZ) < ALIGN_THRESHOLD) { snapped = true; snapTargetZ = otherCenterZ; if (!snapAxes.includes('z')) snapAxes.push('z'); }
+    });
+    let finalX = Math.round(newPos.x * 100) / 100;
+    let finalZ = Math.round(newPos.z * 100) / 100;
+    if (snapTargetY !== null) newY = snapTargetY - dragTopOffset;
+    if (snapTargetX !== null) finalX = snapTargetX;
+    if (snapTargetZ !== null) finalZ = snapTargetZ;
+    if (snapped) showAlignHelper(ring.id, snapTargetY, snapTargetX, snapTargetZ, snapAxes);
+    else hideAlignHelper();
+
+    ring.texture['translate-x'] = finalX;
+    ring.texture['translate-y'] = newY;
+    ring.texture['translate-z'] = finalZ;
+    updateRingTexture(ring.id); updateAllRings(); updateAllTexFields(ring);
+    const snapTag = snapped ? `  [已对齐 ${snapAxes.join('').toUpperCase()}]` : '';
+    showDragHint(`pos: x=${ring.texture['translate-x'].toFixed(2)} y=${ring.texture['translate-y'].toFixed(2)} z=${ring.texture['translate-z'].toFixed(2)}${snapTag}`);
+  } else if (DRAG.mode === 'rotate-xy') {
+    hideAlignHelper();
+    const dx = e.clientX - DRAG.startMouseX; const dy = e.clientY - DRAG.startMouseY;
+    const newRotY = Math.round((DRAG.startRotY + dx * 0.5) * 10) / 10;
+    const newRotX = Math.round((DRAG.startRotX + dy * 0.5) * 10) / 10;
+    ring.texture['rotate-x'] = newRotX; ring.texture['rotate-y'] = newRotY;
+    updateRingTexture(ring.id); updateAllRings(); updateAllTexFields(ring);
+    showDragHint(`rot: x=${newRotX.toFixed(1)}° y=${newRotY.toFixed(1)}° z=${(ring.texture['rotate-z']||0).toFixed(1)}°`);
+  } else if (DRAG.mode === 'rotate-z') {
+    hideAlignHelper();
+    const dx = e.clientX - DRAG.startMouseX;
+    const newRotZ = Math.round((DRAG.startRotZ + dx * 0.5) * 10) / 10;
+    ring.texture['rotate-z'] = newRotZ;
+    updateRingTexture(ring.id); updateAllRings(); updateAllTexFields(ring);
+    showDragHint(`rot-z: ${newRotZ.toFixed(1)}°`);
+  }
+}
+
+function rebuildBBoxes() {
+  if (bboxGroup) {
+    bboxGroup.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (obj.material.map) obj.material.map.dispose(); obj.material.dispose(); } });
+    scene.remove(bboxGroup);
+  }
+  bboxGroup = new THREE.Group();
+  bboxGroup.name = 'bbox-group';
+  getAllRings().forEach(ring => {
+    const tg = STATE.ringMeshes.get(ring.id);
+    if (!tg) return;
+    if (!tg.visible) return;
+    const box = new THREE.Box3().setFromObject(tg);
+    if (box.isEmpty()) return;
+    const size = new THREE.Vector3(); box.getSize(size);
+    const center = new THREE.Vector3(); box.getCenter(center);
+    const isSelected = (ring.id === STATE.selectedRingId);
+    const isChecked = STATE.selectedRingIds.includes(ring.id);
+    let color, opacity;
+    if (isSelected) { color = 0x3fb950; opacity = 0.9; }
+    else if (isChecked) { color = 0x58a6ff; opacity = 0.5; }
+    else { color = 0x7d8590; opacity = 0.2; }
+    const helper = new THREE.Box3Helper(box, new THREE.Color(color));
+    helper.material.transparent = true;
+    helper.material.opacity = opacity;
+    helper.material.depthTest = false;
+    helper.renderOrder = 998;
+    bboxGroup.add(helper);
+    if (isSelected || isChecked) {
+      const label = createBBoxLabel(`W=${size.x.toFixed(2)} H=${size.y.toFixed(2)} D=${size.z.toFixed(2)}`, color);
+      label.position.set(center.x, box.max.y + 0.12, center.z);
+      bboxGroup.add(label);
+    }
+  });
+  scene.add(bboxGroup);
+}
+
+function createBBoxLabel(text, color) {
+  const hexColor = '#' + color.toString(16).padStart(6, '0');
+  const cvs = document.createElement('canvas');
+  cvs.width = 280; cvs.height = 48;
+  const ctx = cvs.getContext('2d');
+  ctx.fillStyle = 'rgba(13,17,23,0.85)'; ctx.fillRect(0, 0, 280, 48);
+  ctx.strokeStyle = hexColor; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 278, 46);
+  ctx.fillStyle = hexColor; ctx.font = 'bold 18px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 140, 24);
+  const tex = new THREE.CanvasTexture(cvs);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: false });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.096), mat);
+  plane.renderOrder = 999;
+  return plane;
+}
+
+function rebuildHeightPoles() {
+  if (heightPoleGroup) {
+    heightPoleGroup.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (obj.material.map) obj.material.map.dispose(); obj.material.dispose(); } });
+    scene.remove(heightPoleGroup);
+  }
+  heightPoleGroup = new THREE.Group();
+  heightPoleGroup.name = 'height-poles';
+  getAllRings().forEach(ring => {
+    const tg = STATE.ringMeshes.get(ring.id);
+    if (!tg) return;
+    const ag = tg.getObjectByName('anim-group');
+    if (!ag) return;
+    const ringBody = ag.getObjectByName('ring-body');
+    if (!ringBody) return;
+    const box = new THREE.Box3().setFromObject(ringBody);
+    const topY = box.max.y;
+    const centerX = (box.min.x + box.max.x) / 2;
+    const centerZ = (box.min.z + box.max.z) / 2;
+    const isSelected = (ring.id === STATE.selectedRingId);
+    const isChecked = STATE.selectedRingIds.includes(ring.id);
+    let poleColor, poleOpacity;
+    if (isSelected) { poleColor = 0x3fb950; poleOpacity = 0.9; }
+    else if (isChecked) { poleColor = 0x58a6ff; poleOpacity = 0.6; }
+    else { poleColor = 0x7d8590; poleOpacity = 0.25; }
+    const poleHeight = Math.max(0.01, topY);
+    const poleGeom = new THREE.CylinderGeometry(0.015, 0.015, poleHeight, 8);
+    const poleMat = new THREE.MeshBasicMaterial({ color: poleColor, transparent: true, opacity: poleOpacity });
+    const pole = new THREE.Mesh(poleGeom, poleMat);
+    pole.position.set(centerX, poleHeight / 2, centerZ);
+    heightPoleGroup.add(pole);
+    const ballGeom = new THREE.SphereGeometry(0.04, 12, 12);
+    const ballMat = new THREE.MeshBasicMaterial({ color: poleColor, transparent: true, opacity: poleOpacity });
+    const ball = new THREE.Mesh(ballGeom, ballMat);
+    ball.position.set(centerX, topY, centerZ);
+    heightPoleGroup.add(ball);
+    if (isSelected || isChecked) {
+      const label = createHeightLabel(`H=${topY.toFixed(2)}`, poleColor);
+      label.position.set(centerX + 0.15, topY, centerZ);
+      heightPoleGroup.add(label);
+    }
+  });
+  scene.add(heightPoleGroup);
+}
+
+function createHeightLabel(text, color) {
+  const hexColor = '#' + color.toString(16).padStart(6, '0');
+  const cvs = document.createElement('canvas');
+  cvs.width = 200; cvs.height = 48;
+  const ctx = cvs.getContext('2d');
+  ctx.fillStyle = 'rgba(13,17,23,0.85)'; ctx.fillRect(0, 0, 200, 48);
+  ctx.strokeStyle = hexColor; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 198, 46);
+  ctx.fillStyle = hexColor; ctx.font = 'bold 20px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 100, 24);
+  const tex = new THREE.CanvasTexture(cvs);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: false });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.096), mat);
+  plane.renderOrder = 999;
+  return plane;
+}
+
+function showAlignHelper(dragRingId, snapY, snapX, snapZ, snapAxes) {
+  hideAlignHelper();
+  alignHelperGroup = new THREE.Group();
+  alignHelperGroup.name = 'align-helper';
+  const allRings = getAllRings();
+  const dragRing = allRings.find(r => r.id === dragRingId);
+  if (!dragRing) return;
+  const dragTg = STATE.ringMeshes.get(dragRingId);
+  if (!dragTg) return;
+  const dragBox = new THREE.Box3().setFromObject(dragTg);
+  const dragX = (dragBox.min.x + dragBox.max.x) / 2;
+  const dragY = dragBox.max.y;
+  const dragZ = (dragBox.min.z + dragBox.max.z) / 2;
+  allRings.forEach(other => {
+    if (other.id === dragRingId) return;
+    const otherTg = STATE.ringMeshes.get(other.id);
+    if (!otherTg) return;
+    const otherBox = new THREE.Box3().setFromObject(otherTg);
+    const ox = (otherBox.min.x + otherBox.max.x) / 2;
+    const oy = otherBox.max.y;
+    const oz = (otherBox.min.z + otherBox.max.z) / 2;
+    if (snapAxes.includes('y') && snapY !== null && Math.abs(oy - snapY) < 0.01) {
+      const dist = Math.sqrt((ox - dragX) ** 2 + (oz - dragZ) ** 2);
+      if (dist > 0.01) {
+        const points = [new THREE.Vector3(dragX, snapY, dragZ), new THREE.Vector3(ox, snapY, oz)];
+        const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+        const lineMat = new THREE.LineDashedMaterial({ color: 0x3fb950, dashSize: 0.1, gapSize: 0.05, transparent: true, opacity: 0.8 });
+        const line = new THREE.Line(lineGeom, lineMat);
+        line.computeLineDistances();
+        alignHelperGroup.add(line);
+        const mid = new THREE.Vector3((dragX + ox) / 2, snapY + 0.08, (dragZ + oz) / 2);
+        const label = createAlignLabel(`Y=${snapY.toFixed(2)}  D=${dist.toFixed(2)}`);
+        label.position.copy(mid);
+        label.lookAt(camera.position);
+        alignHelperGroup.add(label);
+      }
+    }
+    if (snapAxes.includes('x') && snapX !== null && Math.abs(ox - snapX) < 0.01) {
+      const dist = Math.abs(oz - dragZ) + Math.abs(oy - dragY);
+      if (dist > 0.01) {
+        const midX = (dragX + ox) / 2;
+        const midY = (dragY + oy) / 2;
+        const midZ = (dragZ + oz) / 2;
+        const points = [new THREE.Vector3(dragX, dragY, dragZ), new THREE.Vector3(ox, oy, oz)];
+        const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+        const lineMat = new THREE.LineDashedMaterial({ color: 0xff9800, dashSize: 0.1, gapSize: 0.05, transparent: true, opacity: 0.8 });
+        const line = new THREE.Line(lineGeom, lineMat);
+        line.computeLineDistances();
+        alignHelperGroup.add(line);
+        const label = createAlignLabel(`X=${snapX.toFixed(2)}`);
+        label.position.set(midX, midY + 0.08, midZ);
+        label.lookAt(camera.position);
+        alignHelperGroup.add(label);
+      }
+    }
+    if (snapAxes.includes('z') && snapZ !== null && Math.abs(oz - snapZ) < 0.01) {
+      const dist = Math.abs(ox - dragX) + Math.abs(oy - dragY);
+      if (dist > 0.01) {
+        const midX = (dragX + ox) / 2;
+        const midY = (dragY + oy) / 2;
+        const midZ = (dragZ + oz) / 2;
+        const points = [new THREE.Vector3(dragX, dragY, dragZ), new THREE.Vector3(ox, oy, oz)];
+        const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+        const lineMat = new THREE.LineDashedMaterial({ color: 0x58a6ff, dashSize: 0.1, gapSize: 0.05, transparent: true, opacity: 0.8 });
+        const line = new THREE.Line(lineGeom, lineMat);
+        line.computeLineDistances();
+        alignHelperGroup.add(line);
+        const label = createAlignLabel(`Z=${snapZ.toFixed(2)}`);
+        label.position.set(midX, midY + 0.08, midZ);
+        label.lookAt(camera.position);
+        alignHelperGroup.add(label);
+      }
+    }
+  });
+  scene.add(alignHelperGroup);
+}
+
+function createAlignLabel(text) {
+  const cvs = document.createElement('canvas');
+  cvs.width = 256; cvs.height = 64;
+  const ctx = cvs.getContext('2d');
+  ctx.fillStyle = 'rgba(63,185,80,0.85)'; ctx.fillRect(0, 0, 256, 64);
+  ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 254, 62);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 22px "Segoe UI", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 128, 32);
+  const tex = new THREE.CanvasTexture(cvs);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthTest: false });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.125), mat);
+  plane.renderOrder = 999;
+  return plane;
+}
+
+function hideAlignHelper() {
+  if (alignHelperGroup) {
+    alignHelperGroup.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (obj.material.map) obj.material.map.dispose(); obj.material.dispose(); } });
+    scene.remove(alignHelperGroup);
+    alignHelperGroup = null;
+  }
+}
+
+// ===== 预览贴图持久化（不写入 yml 配置，保存到 preview_tex.json）=====
+let previewTexData = {};
+
+async function loadPreviewTex() {
+  try {
+    const resp = await fetch('/api/preview-tex');
+    previewTexData = await resp.json();
+  } catch (e) {
+    previewTexData = {};
+  }
+  const fileMap = previewTexData[STATE.currentFile] || {};
+  getAllRings().forEach(ring => {
+    // preview_tex.json 优先；没有条目则保留 parseYML 从老 path 迁移来的值
+    const saved = fileMap[ring.number];
+    if (saved) ring.previewTexPath = saved;
+  });
+}
+
+let previewTexSaveTimer = null;
+function savePreviewTex() {
+  if (previewTexSaveTimer) clearTimeout(previewTexSaveTimer);
+  previewTexSaveTimer = setTimeout(async () => {
+    const fileMap = {};
+    getAllRings().forEach(ring => {
+      if (ring.previewTexPath) fileMap[ring.number] = ring.previewTexPath;
+    });
+    if (Object.keys(fileMap).length > 0) {
+      previewTexData[STATE.currentFile] = fileMap;
+    } else {
+      delete previewTexData[STATE.currentFile];
+    }
+    try {
+      await fetch('/api/preview-tex', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(previewTexData)
+      });
+    } catch (e) {
+      console.error('保存预览贴图失败:', e);
+    }
+    previewTexSaveTimer = null;
+  }, 300);
+}
+
+function resolveTexturePaths() {
+  getAllRings().forEach(ring => {
+    const p = ring.previewTexPath;
+    if (!p) { ring.imageUrl = ''; return; }
+    const blobItem = textureBlobCache.find(b => b.path === p);
+    if (blobItem) { ring.imageUrl = blobItem.url; return; }
+    if (dragonCoreDir) {
+      ring.imageUrl = `/api/texture-file/${encodeURIComponent(p)}?dir=${encodeURIComponent(dragonCoreDir)}`;
+    } else {
+      ring.imageUrl = '';
+    }
+  });
+}
+
+function reloadRingTextureByPath(ringId) {
+  const ring = getAllRings().find(r => r.id === ringId);
+  if (!ring) return;
+  const p = ring.previewTexPath;
+  if (!p) { ring.imageUrl = ''; }
+  else {
+    const blobItem = textureBlobCache.find(b => b.path === p);
+    if (blobItem) ring.imageUrl = blobItem.url;
+    else if (dragonCoreDir) ring.imageUrl = `/api/texture-file/${encodeURIComponent(p)}?dir=${encodeURIComponent(dragonCoreDir)}`;
+    else ring.imageUrl = '';
+  }
+  const oldMesh = STATE.ringMeshes.get(ringId);
+  if (oldMesh) { playerGroup.remove(oldMesh); oldMesh.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); }); }
+  const newMesh = createRingMesh(ring);
+  newMesh.visible = STATE.showAllRings || STATE.selectedRingIds.includes(ring.id) || (ring.id === STATE.selectedRingId);
+  playerGroup.add(newMesh);
+  STATE.ringMeshes.set(ring.id, newMesh);
+  updateRingTexture(ring.id); updateAllRings();
+}
+
+function updateAllTexFields(ring) {
+  ['translate-x','translate-y','translate-z','rotate-x','rotate-y','rotate-z'].forEach(k => {
+    const input = document.querySelector(`[data-tex="${k}"]`);
+    if (input) input.value = ring.texture[k];
+  });
+  const fpeInput = document.querySelector('[data-tex="follow-player-eyes"]');
+  if (fpeInput) fpeInput.checked = !!ring.texture['follow-player-eyes'];
+  const delayInput = document.querySelector('[data-ring-delay]');
+  if (delayInput) delayInput.value = ring.delay;
+}
+
+function showDragHint(text) { const hint = document.getElementById('viewport-hint'); hint.textContent = text; hint.classList.add('show'); }
+function hideDragHint() { const hint = document.getElementById('viewport-hint'); if (hint) hint.classList.remove('show'); }
+
+// ============================================================
+//  Texture Modal (kept from old editor)
+// ============================================================
+function openTexModal(ringId) {
+  texModalRingId = ringId;
+  texModalPreviewOnly = false;
+  const ring = getAllRings().find(r => r.id === ringId);
+  document.getElementById('tex-modal-ring-name').textContent = ring ? ring.name : '';
+  document.getElementById('tex-modal').classList.add('show');
+  document.getElementById('tex-url-input').value = ring.imageUrl || '';
+  const dirSection = document.getElementById('tex-dir-section');
+  if (textureListCache.length > 0) {
+    dirSection.style.display = '';
+    document.getElementById('tex-list-count').textContent = textureListCache.length;
+    renderTexList(textureListCache);
+  } else {
+    dirSection.style.display = '';
+    document.getElementById('tex-list-container').innerHTML = `
+      <div style="padding:16px;text-align:center">
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px">尚未设置贴图目录，请前往「全局设置」选择 DragonCore 贴图目录</p>
+        <button class="btn btn-sm btn-primary" onclick="closeTexModal();openSettingsModal()">前往设置</button>
+      </div>`;
+  }
+  document.getElementById('tex-search-input').value = '';
+}
+
+function openPreviewTexModal(ringId) {
+  texModalRingId = ringId;
+  texModalPreviewOnly = true;
+  const ring = getAllRings().find(r => r.id === ringId);
+  document.getElementById('tex-modal-ring-name').textContent = ring ? ring.name + ' (预览贴图，不写入配置)' : '';
+  document.getElementById('tex-modal').classList.add('show');
+  document.getElementById('tex-url-input').value = ring.imageUrl || '';
+  const dirSection = document.getElementById('tex-dir-section');
+  if (textureListCache.length > 0) {
+    dirSection.style.display = '';
+    document.getElementById('tex-list-count').textContent = textureListCache.length;
+    renderTexList(textureListCache);
+  } else {
+    dirSection.style.display = '';
+    document.getElementById('tex-list-container').innerHTML = `
+      <div style="padding:16px;text-align:center">
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px">尚未设置贴图目录，请前往「全局设置」选择 DragonCore 贴图目录</p>
+        <button class="btn btn-sm btn-primary" onclick="closeTexModal();openSettingsModal()">前往设置</button>
+      </div>`;
+  }
+  document.getElementById('tex-search-input').value = '';
+}
+
+function renderTexList(list) {
+  const container = document.getElementById('tex-list-container');
+  if (list.length === 0) { container.innerHTML = '<div style="padding:12px;color:var(--text-dim);font-size:12px">无匹配贴图</div>'; return; }
+  const tree = {};
+  list.forEach(t => {
+    const parts = t.split('/');
+    let node = tree;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const dir = parts[i];
+      if (!node[dir]) node[dir] = { _children: {} };
+      node = node[dir]._children;
+    }
+    const fname = parts[parts.length - 1];
+    if (!node._files) node._files = [];
+    node._files.push({ name: fname, path: t });
+  });
+  function getBlobUrl(path) {
+    const blobItem = textureBlobCache.find(b => b.path === path);
+    return blobItem ? blobItem.url : `/api/texture-file/${encodeURIComponent(path)}?dir=${encodeURIComponent(dragonCoreDir)}`;
+  }
+  function renderTree(node, prefix, depth) {
+    let html = '';
+    const dirs = Object.keys(node).filter(k => k !== '_files').sort();
+    const files = node._files || [];
+    dirs.forEach(dir => {
+      const childPath = prefix ? prefix + '/' + dir : dir;
+      const childNode = node[dir]._children;
+      function countFiles(n) {
+        let c = (n._files || []).length;
+        Object.keys(n).filter(k => k !== '_files').forEach(k => { c += countFiles(n[k]._children || {}); });
+        return c;
+      }
+      const total = countFiles(node[dir]._children || {});
+      const id = 'tex-dir-' + childPath.replace(/[^a-zA-Z0-9]/g, '_') + '_' + depth;
+      const expanded = texExpandedDirs.has(childPath);
+      const safePath = childPath.replace(/'/g, "\\'");
+      html += `<div class="tex-tree-dir" onclick="toggleTexDir('${id}','${safePath}')" style="cursor:pointer;padding:4px 8px;font-size:12px;color:var(--accent);user-select:none;display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+        <span class="tex-tree-arrow" id="${id}-arrow" style="display:inline-block;width:12px;transition:transform .15s;transform:${expanded ? 'rotate(90deg)' : 'rotate(0deg)'}">▶</span>
+        <span>📁 ${dir}</span>
+        <span style="color:var(--text-dim);font-size:11px">(${total})</span>
+      </div>`;
+      html += `<div class="tex-tree-children" id="${id}" style="display:${expanded ? 'block' : 'none'};margin-left:${12 + depth * 12}px">`;
+      html += renderTree(childNode, childPath, depth + 1);
+      html += `</div>`;
+    });
+    if (files.length > 0) {
+      files.forEach(f => {
+        const imgUrl = getBlobUrl(f.path);
+        html += `<div class="tex-list-item" onclick="selectTexFromList('${f.path.replace(/'/g, "\\'")}')" style="display:flex;align-items:center;gap:8px;padding:4px 8px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+          <img src="${imgUrl}" style="width:20px;height:20px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
+          <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+        </div>`;
+      });
+    }
+    return html;
+  }
+  container.innerHTML = renderTree(tree, '', 0);
+}
+
+function toggleTexDir(id, dirPath) {
+  const el = document.getElementById(id);
+  const arrow = document.getElementById(id + '-arrow');
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  if (arrow) arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+  if (dirPath) {
+    if (isHidden) texExpandedDirs.add(dirPath);
+    else texExpandedDirs.delete(dirPath);
+    try { localStorage.setItem('bloom_tex_expanded_dirs', JSON.stringify([...texExpandedDirs])); } catch(e) {}
+  }
+}
+
+function filterTexList() {
+  const q = document.getElementById('tex-search-input').value.toLowerCase().trim();
+  if (!q) {
+    renderTexList(textureListCache);
+  } else {
+    const filtered = textureListCache.filter(t => t.toLowerCase().includes(q));
+    const container = document.getElementById('tex-list-container');
+    if (filtered.length === 0) { container.innerHTML = '<div style="padding:12px;color:var(--text-dim);font-size:12px">无匹配贴图</div>'; return; }
+    container.innerHTML = filtered.map(t => {
+      const blobItem = textureBlobCache.find(b => b.path === t);
+      const imgUrl = blobItem ? blobItem.url : `/api/texture-file/${encodeURIComponent(t)}?dir=${encodeURIComponent(dragonCoreDir)}`;
+      return `<div class="tex-list-item" onclick="selectTexFromList('${t.replace(/'/g, "\\'")}')" style="display:flex;align-items:center;gap:8px;padding:4px 8px;cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+        <img src="${imgUrl}" style="width:20px;height:20px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
+        <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+function selectTexFromList(relPath) {
+  const blobItem = textureBlobCache.find(b => b.path === relPath);
+  const url = blobItem ? blobItem.url : `/api/texture-file/${encodeURIComponent(relPath)}?dir=${encodeURIComponent(dragonCoreDir)}`;
+  document.getElementById('tex-url-input').value = url;
+  const ring = getAllRings().find(r => r.id === texModalRingId);
+  if (!ring) return;
+  ring.previewTexPath = relPath;
+  persistAppliedTexture(relPath);
+  applyTexture();
+}
+
+function closeTexModal() { texModalRingId = null; texModalPreviewOnly = false; document.getElementById('tex-modal').classList.remove('show'); }
+
+function applyTexture() {
+  if (!texModalRingId) return;
+  const url = document.getElementById('tex-url-input').value.trim();
+  const ring = getAllRings().find(r => r.id === texModalRingId);
+  if (!ring) return;
+  ring.imageUrl = url;
+  const oldMesh = STATE.ringMeshes.get(texModalRingId);
+  if (oldMesh) { playerGroup.remove(oldMesh); oldMesh.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); }); }
+  const newMesh = createRingMesh(ring);
+  newMesh.visible = STATE.showAllRings || STATE.selectedRingIds.includes(ring.id) || (ring.id === STATE.selectedRingId);
+  playerGroup.add(newMesh);
+  STATE.ringMeshes.set(ring.id, newMesh);
+  updateRingTexture(ring.id); updateAllRings();
+  closeTexModal(); renderSidebar();
+  savePreviewTex();
+  showToast(url ? '预览贴图已应用（不写入配置）' : '贴图已清除', 'success');
+}
+
+function clearPreviewTexture(ringId) {
+  const ring = getAllRings().find(r => r.id === ringId);
+  if (!ring) return;
+  ring.previewTexPath = '';
+  reloadRingTextureByPath(ringId);
+  renderSidebar();
+  savePreviewTex();
+  showToast('预览贴图已清除', 'info');
+}
+
+// 将已应用的预览贴图 blob 单独写入 IndexedDB，保证刷新后仍能恢复显示
+async function persistAppliedTexture(path) {
+  const blobItem = textureBlobCache.find(b => b.path === path);
+  if (!blobItem || !blobItem.file) return;
+  try { await texIDBSave(path, blobItem.file); } catch (e) { /* IndexedDB 失败不阻断预览 */ }
+}
+
+// ============================================================
+//  Ring Sidebar UI (kept from old editor)
+// ============================================================
+function renderSidebar() {
+  const container = document.getElementById('sidebar-content');
+  if (!container) return;
+  if (STATE.currentFileType !== 'texture' && !STATE.previewing) { container.innerHTML = ''; return; }
+  if (STATE.previewing) {
+    document.getElementById('ring-sidebar-title').textContent = '👁 预览模式';
+    container.innerHTML = `<div class="task-bar">
+      <div class="task-name">预览中（不会保存修改）</div>
+    </div>
+    <div class="sidebar-section">
+      <button class="btn btn-sm btn-primary" style="width:100%" onclick="exitPreview()">← 退出预览</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="section-title"><span>魂环列表 (${getAllRings().length})</span></div>
+      <div class="ring-list">
+        ${getAllRings().map((ring, idx) => {
+          const thumbHtml = ring.imageUrl ? `<img src="${ring.imageUrl}" style="width:28px;height:28px;object-fit:contain;flex-shrink:0;border-radius:3px;background:rgba(0,0,0,0.3)" onerror="this.style.display='none'">` : `<div class="ring-color-swatch" style="width:28px;height:28px;border-radius:3px;background:${ring.color};flex-shrink:0"></div>`;
+          return `<div class="ring-item">
+            <input type="checkbox" class="ring-checkbox" data-ring-check="${ring.id}" ${STATE.selectedRingIds.includes(ring.id) ? 'checked' : ''}>
+            ${thumbHtml}
+            <div class="ring-num">${idx + 1}</div>
+            <div class="ring-name">${escapeHtml(ring.name)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+    // 复选框切换显示
+    container.querySelectorAll('.ring-checkbox').forEach(el => {
+      el.addEventListener('change', () => {
+        const id = parseInt(el.dataset.ringCheck);
+        if (el.checked && !STATE.selectedRingIds.includes(id)) STATE.selectedRingIds.push(id);
+        else if (!el.checked) STATE.selectedRingIds = STATE.selectedRingIds.filter(x => x !== id);
+        updateRingVisibility();
+      });
+    });
+    return;
+  }
+  document.getElementById('ring-sidebar-title').textContent = STATE.currentFile ? `魂环编辑 · ${STATE.currentFile.split('/').pop()}` : '魂环编辑';
+  container.innerHTML = renderRingsTab();
+  attachRingEvents();
+}
+
+function renderRingsTab() {
+  let html = '';
+  html += `<div class="task-bar">
+    <div class="task-name ${STATE.currentFile ? '' : 'empty'}">${STATE.currentFile ? '📄 ' + STATE.currentFile.split('/').pop() : '未选择文件'}</div>
+  </div>`;
+  const rings = getAllRings();
+  html += `<div class="sidebar-section">
+    <div class="section-title"><span>魂环列表 (${rings.length})</span><button class="btn btn-sm btn-green" onclick="addRing()">+ 新建魂环</button></div>
+    <div class="ring-list">`;
+  if (rings.length === 0) { html += `<div class="empty-state"><p>暂无魂环，点击上方按钮新建</p></div>`; }
+  else {
+    rings.forEach((ring, idx) => {
+      const checked = STATE.selectedRingIds.includes(ring.id) ? 'checked' : '';
+      const active = ring.id === STATE.selectedRingId ? 'active' : '';
+      const animCount = ring.animations.translate.length + ring.animations.scale.length + ring.animations.rotate.length;
+      const thumbHtml = ring.imageUrl ? `<img src="${ring.imageUrl}" style="width:28px;height:28px;object-fit:contain;flex-shrink:0;border-radius:3px;background:rgba(0,0,0,0.3)" onerror="this.style.display='none'">` : `<div class="ring-color-swatch" style="width:28px;height:28px;border-radius:3px;background:${ring.color};flex-shrink:0"></div>`;
+      html += `<div class="ring-item ${active}" data-ring-id="${ring.id}">
+        <input type="checkbox" class="ring-checkbox" data-ring-check="${ring.id}" ${checked}>
+        ${thumbHtml}
+        <div class="ring-num">${idx + 1}</div>
+        <div class="ring-name">${escapeHtml(ring.name)}<br><span style="font-size:11px;color:var(--text-dim)">${animCount} 个动画 · delay ${ring.delay}s (出场 ${(getRingCumulativeDelayMs(ring.id)/1000).toFixed(1)}s)</span></div>
+        <span class="ring-del" data-del-id="${ring.id}">✕</span>
+      </div>`;
+    });
+  }
+  html += `</div></div>`;
+  const ring = getAllRings().find(r => r.id === STATE.selectedRingId);
+  if (ring) html += renderRingEditor(ring);
+  return html;
+}
+
+function renderRingEditor(ring) {
+  let html = `<div class="sidebar-section"><div class="section-title">编辑: ${escapeHtml(ring.name)}</div>`;
+  html += `<div class="field" style="margin-bottom:8px"><label>魂环名称</label><input type="text" value="${escapeHtml(ring.name)}" data-field="ring-name"></div>`;
+  html += `<div class="field" style="margin-bottom:8px"><label>ring delay (秒，累加：此环的出场时间 = 前面所有环delay之和)</label><input type="number" value="${ring.delay}" data-ring-delay step="0.5"></div>`;
+  html += renderTextureSection(ring);
+  html += renderAnimSection(ring, 'translate', '平移动画', 'translate');
+  html += renderAnimSection(ring, 'scale', '缩放动画', 'scale');
+  html += renderAnimSection(ring, 'rotate', '旋转动画', 'rotate');
+  html += `</div>`;
+  return html;
+}
+
+function renderTextureSection(ring) {
+  const t = ring.texture;
+  return `<div class="anim-section expanded" data-anim-type="texture">
+    <div class="anim-section-header"><div class="label"><span class="dot texture"></span>贴图变换 (Texture)</div></div>
+    <div class="anim-section-body">
+      <p style="font-size:11px;color:var(--text-dim);margin-bottom:8px">相对玩家(0,0,0)的初始位置和朝向。<b style="color:var(--accent)">左键拖环=移动</b>，<b style="color:var(--purple)">Shift+拖=旋转X/Y</b>，<b style="color:var(--orange)">Ctrl+拖=旋转Z</b>。</p>
+      <div class="texture-fields">
+        <div class="field"><label>translate-x</label><input type="number" value="${t['translate-x']}" data-tex="translate-x" step="0.1"></div>
+        <div class="field"><label>translate-y</label><input type="number" value="${t['translate-y']}" data-tex="translate-y" step="0.1"></div>
+        <div class="field"><label>translate-z</label><input type="number" value="${t['translate-z']}" data-tex="translate-z" step="0.1"></div>
+        <div class="field"><label>rotate-x (°)</label><input type="number" value="${t['rotate-x']}" data-tex="rotate-x" step="1"></div>
+        <div class="field"><label>rotate-y (°)</label><input type="number" value="${t['rotate-y']}" data-tex="rotate-y" step="1"></div>
+        <div class="field"><label>rotate-z (°)</label><input type="number" value="${t['rotate-z']}" data-tex="rotate-z" step="1"></div>
+      </div>
+      <div class="field field-full" style="margin-top:6px">
+        <label>跟随视角 (follow-player-eyes) — 贴图始终面向观察者，勾选后 rotate 不生效</label>
+        <input type="checkbox" ${t['follow-player-eyes'] ? 'checked' : ''} data-tex="follow-player-eyes" style="width:auto;accent-color:var(--accent)">
+      </div>
+      <div class="field field-full" style="margin-top:6px">
+        <label>预览贴图 — 不写入配置，仅 3D 预览用，保存到 preview_tex.json</label>
+        <div style="display:flex;gap:4px;align-items:center">
+          <div style="flex:1;padding:6px 8px;background:var(--bg-dark);border:1px solid var(--border);border-radius:4px;font-size:12px;color:var(--text-main);min-height:30px;font-family:monospace;word-break:break-all">
+            ${ring.previewTexPath ? `<img src="${ring.imageUrl}" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;border-radius:2px" onerror="this.style.display='none'"> <span style="vertical-align:middle">${escapeHtml(ring.previewTexPath)}</span>` : '<span style="color:var(--text-dim)">未设置</span>'}
+          </div>
+          <button class="btn btn-sm btn-green" onclick="openPreviewTexModal(${ring.id})">套贴图</button>
+          ${ring.previewTexPath ? `<button class="btn btn-sm btn-danger" onclick="clearPreviewTexture(${ring.id})">清除</button>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderAnimSection(ring, type, title, dotClass) {
+  const anims = ring.animations[type];
+  let html = `<div class="anim-section expanded" data-anim-type="${type}">
+    <div class="anim-section-header"><div class="label"><span class="dot ${dotClass}"></span>${title} (${anims.length})</div><button class="btn btn-sm btn-green" data-add-anim="${type}">+ 添加</button></div>
+    <div class="anim-section-body">`;
+  anims.forEach((a, idx) => {
+    html += `<div class="anim-item" data-anim-idx="${idx}">`;
+    html += `<div class="anim-item-header"><span class="idx">#${idx + 1}（并行，各自delay控制起始）</span><span class="ring-del" data-del-anim="${type}:${idx}">✕</span></div>`;
+    html += `<div class="anim-item-fields">`;
+    if (type === 'translate') {
+      html += field('direction', '方向(局部轴)', 'select', a.direction, ['x','y','z']);
+      html += field('delay', '延迟(ms)', 'number', a.delay);
+      html += field('distance', '距离', 'number', a.distance, null, '0.01');
+      html += field('duration', '时长(ms)', 'number', a.duration);
+      html += field('cycleCount', '循环(-1无限)', 'number', a.cycleCount);
+      html += field('fixed', 'fixed', 'select', a.fixed, [true, false]);
+    } else if (type === 'scale') {
+      html += field('delay', '延迟(ms)', 'number', a.delay);
+      html += field('duration', '时长(ms)', 'number', a.duration);
+      html += field('fromScale', '起始缩放', 'number', a.fromScale, null, '0.01');
+      html += field('toScale', '目标缩放', 'number', a.toScale, null, '0.01');
+      html += field('cycleCount', '循环(-1无限)', 'number', a.cycleCount);
+      html += field('fixed', 'fixed', 'select', a.fixed, [true, false]);
+      html += field('resetTime', '重置时间', 'number', a.resetTime);
+    } else if (type === 'rotate') {
+      html += field('direction', '方向(局部轴)', 'select', a.direction, ['x','y','z']);
+      html += field('delay', '延迟(ms)', 'number', a.delay);
+      html += field('angle', '角度', 'number', a.angle, null, '0.1');
+      html += field('duration', '时长(ms)', 'number', a.duration);
+      html += field('cycleCount', '循环(-1无限)', 'number', a.cycleCount);
+      html += field('fixed', 'fixed', 'select', a.fixed, [true, false]);
+    }
+    html += `</div></div>`;
+  });
+  if (anims.length === 0) html += `<div class="empty-state"><p>暂无动画，点击上方添加</p></div>`;
+  html += `</div></div>`;
+  return html;
+}
+
+function field(name, label, type, value, options, step) {
+  let input;
+  if (type === 'select') {
+    const opts = options.map(o => {
+      const val = (o === true ? 'true' : o === false ? 'false' : String(o));
+      const cur = (value === true ? 'true' : value === false ? 'false' : String(value));
+      return `<option value="${val}" ${cur === val ? 'selected' : ''}>${val}</option>`;
+    }).join('');
+    input = `<select data-field="${name}">${opts}</select>`;
+  }
+  else if (type === 'checkbox') { input = `<input type="checkbox" data-field="${name}" ${value ? 'checked' : ''}>`; }
+  else { const stepAttr = step ? ` step="${step}"` : ''; input = `<input type="${type}" value="${value}" data-field="${name}"${stepAttr}>`; }
+  return `<div class="field"><label>${label}</label>${input}</div>`;
+}
+
+function attachRingEvents() {
+  document.querySelectorAll('.ring-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.classList.contains('ring-del')) return;
+      const id = parseInt(el.dataset.ringId);
+      if (e.target.classList.contains('ring-checkbox')) {
+        if (STATE.selectedRingIds.includes(id)) {
+          STATE.selectedRingIds = STATE.selectedRingIds.filter(rid => rid !== id);
+          if (STATE.selectedRingId === id) STATE.selectedRingId = STATE.selectedRingIds[0] || null;
+        } else {
+          STATE.selectedRingIds.push(id);
+          STATE.selectedRingId = id;
+        }
+        updateRingVisibility(); renderSidebar();
+        return;
+      }
+      STATE.selectedRingId = id;
+      if (!STATE.selectedRingIds.includes(id)) STATE.selectedRingIds = [id];
+      const ring = getAllRings().find(r => r.id === id);
+      if (ring) {
+        const delayMs = getRingCumulativeDelayMs(ring.id);
+        if (STATE.currentTime < delayMs) STATE.currentTime = delayMs;
+      }
+      updateRingVisibility(); updateAllRings(); updateTimelineUI(); renderSidebar();
+    });
+  });
+  document.querySelectorAll('[data-del-id]').forEach(el => { el.addEventListener('click', (e) => { e.stopPropagation(); deleteRing(parseInt(el.dataset.delId)); }); });
+  const nameInput = document.querySelector('[data-field="ring-name"]');
+  if (nameInput) { nameInput.addEventListener('change', (e) => { const ring = getAllRings().find(r => r.id === STATE.selectedRingId); if (ring) { ring.name = e.target.value; scheduleAutoSaveWithUndo(); renderSidebar(); } }); }
+  const delayInput = document.querySelector('[data-ring-delay]');
+  if (delayInput) { delayInput.addEventListener('change', (e) => { const ring = getAllRings().find(r => r.id === STATE.selectedRingId); if (ring) { ring.delay = parseFloat(e.target.value) || 0; updateTotalDuration(); updateAllRings(); updateTimelineUI(); scheduleAutoSaveWithUndo(); } }); }
+  document.querySelectorAll('[data-tex]').forEach(el => {
+    el.addEventListener('change', () => {
+      const ring = getAllRings().find(r => r.id === STATE.selectedRingId);
+      if (!ring) return;
+      const key = el.dataset.tex;
+      if (el.type === 'checkbox') {
+        ring.texture[key] = el.checked;
+      } else {
+        ring.texture[key] = parseFloat(el.value) || 0;
+        updateRingTexture(ring.id);
+      }
+      updateAllRings(); scheduleAutoSaveWithUndo();
+    });
+  });
+  document.querySelectorAll('.anim-section-header').forEach(el => { el.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') return; el.parentElement.classList.toggle('expanded'); }); });
+  document.querySelectorAll('[data-add-anim]').forEach(el => { el.addEventListener('click', (e) => { e.stopPropagation(); addAnimation(el.dataset.addAnim); }); });
+  document.querySelectorAll('[data-del-anim]').forEach(el => { el.addEventListener('click', (e) => { e.stopPropagation(); const [type, idx] = el.dataset.delAnim.split(':'); deleteAnimation(type, parseInt(idx)); }); });
+  document.querySelectorAll('.anim-item input[data-field], .anim-item select[data-field]').forEach(el => {
+    el.addEventListener('change', () => {
+      const animItem = el.closest('.anim-item');
+      const type = el.closest('.anim-section').dataset.animType;
+      const idx = parseInt(animItem.dataset.animIdx);
+      const ring = getAllRings().find(r => r.id === STATE.selectedRingId);
+      if (!ring) return;
+      let val;
+      if (el.tagName === 'SELECT') {
+        const raw = el.value;
+        if (raw === 'true') val = true;
+        else if (raw === 'false') val = false;
+        else val = raw;
+      }
+      else if (el.type === 'number') val = parseFloat(el.value) || 0;
+      else val = el.value;
+      ring.animations[type][idx][el.dataset.field] = val;
+      updateTotalDuration(); updateAllRings(); updateTimelineUI(); scheduleAutoSaveWithUndo();
+    });
+  });
+}
+
+function addRing() {
+  const rings = getAllRings();
+  const num = rings.length + 1;
+  const key = String(num);
+  const ring = {
+    id: ++ringIdCounter, name: `魂环 ${key}`, number: key, delay: 0,
+    color: STATE.ringColors[(num - 1) % STATE.ringColors.length],
+    imageUrl: '', previewTexPath: '', texture: defaultTexture(), animations: { translate: [], scale: [], rotate: [] }
+  };
+  STATE.config.setting[key] = ring;
+  STATE.selectedRingId = ring.id;
+  STATE.selectedRingIds = [ring.id];
+  rebuildAllRings(); renderSidebar(); scheduleAutoSaveWithUndo();
+  showToast(`已新建魂环 ${num}`, 'success');
+}
+
+function deleteRing(id) {
+  const rings = getAllRings();
+  const idx = rings.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  const key = rings[idx].number;
+  delete STATE.config.setting[key];
+  const remaining = getAllRings();
+  const newSetting = {};
+  remaining.forEach((r, i) => { r.number = String(i + 1); r.name = `魂环 ${r.number}`; newSetting[r.number] = r; });
+  STATE.config.setting = newSetting;
+  STATE.selectedRingIds = STATE.selectedRingIds.filter(rid => rid !== id);
+  if (STATE.selectedRingId === id) { STATE.selectedRingId = STATE.selectedRingIds.length > 0 ? STATE.selectedRingIds[0] : (remaining.length > 0 ? remaining[0].id : null); if (STATE.selectedRingId != null && !STATE.selectedRingIds.includes(STATE.selectedRingId)) STATE.selectedRingIds = [STATE.selectedRingId]; }
+  rebuildAllRings(); renderSidebar(); scheduleAutoSaveWithUndo();
+  showToast('魂环已删除', 'warning');
+}
+
+function addAnimation(type) {
+  const ring = getAllRings().find(r => r.id === STATE.selectedRingId);
+  if (!ring) return;
+  let defaults;
+  if (type === 'translate') defaults = { direction: 'z', delay: 0, distance: 1, duration: 3000, cycleCount: 1, fixed: true };
+  else if (type === 'scale') defaults = { delay: 0, fromScale: 10.3, toScale: 1, duration: 3000, cycleCount: 1, fixed: true, resetTime: 0 };
+  else if (type === 'rotate') defaults = { direction: 'z', delay: 0, angle: 360, duration: 6000, cycleCount: -1, fixed: false };
+  ring.animations[type].push(defaults);
+  updateTotalDuration(); updateAllRings(); updateTimelineUI(); renderSidebar(); scheduleAutoSaveWithUndo();
+}
+
+function deleteAnimation(type, idx) {
+  const ring = getAllRings().find(r => r.id === STATE.selectedRingId);
+  if (!ring) return;
+  ring.animations[type].splice(idx, 1);
+  updateTotalDuration(); updateAllRings(); updateTimelineUI(); renderSidebar(); scheduleAutoSaveWithUndo();
+}
+
+function setRingPreset(ringId, preset) {
+  const ring = getAllRings().find(r => r.id === ringId);
+  if (!ring) return;
+  if (preset === 'reset') { ring.texture = { 'translate-x': 0, 'translate-y': 0, 'translate-z': 0, 'rotate-x': 0, 'rotate-y': 0, 'rotate-z': 0, 'follow-player-eyes': ring.texture['follow-player-eyes'] ?? false }; }
+  updateRingTexture(ringId); updateAllRings(); renderSidebar(); scheduleAutoSaveWithUndo();
+}
+
+function clearRingTexture(ringId) {
+  const ring = getAllRings().find(r => r.id === ringId);
+  if (!ring) return;
+  ring.imageUrl = '';
+  const oldMesh = STATE.ringMeshes.get(ringId);
+  if (oldMesh) { playerGroup.remove(oldMesh); oldMesh.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); }); }
+  const newMesh = createRingMesh(ring);
+  newMesh.visible = STATE.showAllRings || STATE.selectedRingIds.includes(ring.id) || (ring.id === STATE.selectedRingId);
+  playerGroup.add(newMesh); STATE.ringMeshes.set(ring.id, newMesh);
+  updateRingTexture(ring.id); updateAllRings(); renderSidebar(); scheduleAutoSaveWithUndo();
+  showToast('贴图已清除', 'warning');
+}
+
+// ============================================================
+//  Form Editor Dispatcher
+// ============================================================
+function loadFormEditor(fileType, content) {
+  const container = document.getElementById('form-editor');
+  switch (fileType) {
+    case 'model':
+      STATE.modelData = parseModel(content);
+      container.innerHTML = renderModelEditor();
+      attachModelEvents();
+      break;
+    case 'config':
+      STATE.configData = parseMainConfig(content);
+      container.innerHTML = renderMainConfigEditor();
+      attachMainConfigEvents();
+      break;
+    case 'world-texture':
+      STATE.worldTextureData = parseWorldTexture(content);
+      container.innerHTML = renderWorldTextureEditor();
+      attachWorldTextureEvents();
+      break;
+    case 'message':
+      STATE.messageData = parseMessage(content);
+      msgSectionCollapsed = { player: false, console: false, help: false };
+      container.innerHTML = renderMessageEditor();
+      attachMessageEvents();
+      break;
+    default:
+      STATE.rawYamlContent = content;
+      container.innerHTML = renderRawYamlEditor();
+      attachRawYamlEvents();
+      break;
+  }
+}
+
+// ============================================================
+//  Model Config Editor
+// ============================================================
+function parseModel(content) {
+  try {
+    const doc = jsyaml.load(content);
+    if (!doc || !doc.setting) return { setting: {} };
+    return { setting: doc.setting };
+  } catch (e) {
+    showToast('模型配置解析失败: ' + e.message, 'error');
+    return { setting: {} };
+  }
+}
+
+function serializeModel() {
+  if (!STATE.modelData) return '';
+  const out = { setting: {} };
+  const keys = Object.keys(STATE.modelData.setting).sort((a, b) => parseInt(a) - parseInt(b));
+  keys.forEach(k => {
+    const layer = STATE.modelData.setting[k];
+    out.setting[k] = { delay: layer.delay ?? 0, location: { x: layer.location?.x ?? 0, y: layer.location?.y ?? 0, z: layer.location?.z ?? 0 } };
+  });
+  let yml = jsyaml.dump(out, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"' });
+  yml = yml.replace(/^(\s*)"(\d+)":/gm, '$1$2:');
+  return yml;
+}
+
+function renderModelEditor() {
+  const layers = STATE.modelData.setting;
+  const keys = Object.keys(layers).sort((a, b) => parseInt(a) - parseInt(b));
+  let html = `<div class="fe-header">🎭 模型配置编辑 <span style="color:var(--text-dim);font-size:12px;font-weight:400">${escapeHtml(STATE.currentFile || '')}</span></div>`;
+  html += `<div class="fe-section">
+    <div class="fe-section-title"><span>层级列表 (${keys.length})</span><button class="btn btn-sm btn-green" onclick="addModelLayer()">+ 新增层级</button></div>`;
+  if (keys.length === 0) {
+    html += `<div class="empty-state"><p>暂无层级</p></div>`;
+  } else {
+    keys.forEach((key, idx) => {
+      const layer = layers[key];
+      const loc = layer.location || { x: 0, y: 0, z: 0 };
+      html += `<div class="model-layer" data-layer-key="${escapeHtml(key)}">
+        <div class="model-layer-header">
+          <div class="ml-num">${idx + 1}</div>
+          <div class="ml-title">层级 ${escapeHtml(key)}</div>
+          <button class="btn btn-sm btn-danger" onclick="deleteModelLayer('${escapeHtml(key)}')">删除</button>
+        </div>
+        <div class="model-layer-grid">
+          <div class="field"><label>delay (秒)</label><input type="number" step="0.5" value="${layer.delay ?? 0}" data-model-field="delay" data-model-key="${escapeHtml(key)}"></div>
+          <div class="field"><label>location.x</label><input type="number" step="0.1" value="${loc.x ?? 0}" data-model-field="location.x" data-model-key="${escapeHtml(key)}"></div>
+          <div class="field"><label>location.y</label><input type="number" step="0.1" value="${loc.y ?? 0}" data-model-field="location.y" data-model-key="${escapeHtml(key)}"></div>
+          <div class="field"><label>location.z</label><input type="number" step="0.1" value="${loc.z ?? 0}" data-model-field="location.z" data-model-key="${escapeHtml(key)}"></div>
+        </div>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);line-height:1.8;margin-top:12px">
+    <p><b>层级配置:</b> 每个层级有 delay (秒) 和 location.x/y/z (相对实体)</p>
+    <p><b>自动保存:</b> 修改后 0.5s 自动保存</p>
+  </div>`;
+  return html;
+}
+
+function attachModelEvents() {
+  document.querySelectorAll('[data-model-field]').forEach(el => {
+    el.addEventListener('change', () => {
+      const key = el.dataset.modelKey;
+      const field = el.dataset.modelField;
+      const layer = STATE.modelData.setting[key];
+      if (!layer) return;
+      const val = parseFloat(el.value) || 0;
+      if (field === 'delay') layer.delay = val;
+      else if (field === 'location.x') { if (!layer.location) layer.location = {}; layer.location.x = val; }
+      else if (field === 'location.y') { if (!layer.location) layer.location = {}; layer.location.y = val; }
+      else if (field === 'location.z') { if (!layer.location) layer.location = {}; layer.location.z = val; }
+      scheduleAutoSave();
+    });
+  });
+}
+
+function addModelLayer() {
+  const keys = Object.keys(STATE.modelData.setting).map(k => parseInt(k)).filter(n => !isNaN(n));
+  const newKey = String((keys.length > 0 ? Math.max(...keys) : 0) + 1);
+  STATE.modelData.setting[newKey] = { delay: 0, location: { x: 0, y: 0, z: 0 } };
+  document.getElementById('form-editor').innerHTML = renderModelEditor();
+  attachModelEvents();
+  scheduleAutoSave();
+  showToast(`已新增层级 ${newKey}`, 'success');
+}
+
+function deleteModelLayer(key) {
+  if (!confirm(`确定删除层级 "${key}"？`)) return;
+  delete STATE.modelData.setting[key];
+  const keys = Object.keys(STATE.modelData.setting).sort((a, b) => parseInt(a) - parseInt(b));
+  const newSetting = {};
+  keys.forEach((k, i) => { newSetting[String(i + 1)] = STATE.modelData.setting[k]; });
+  STATE.modelData.setting = newSetting;
+  document.getElementById('form-editor').innerHTML = renderModelEditor();
+  attachModelEvents();
+  scheduleAutoSave();
+  showToast(`层级 ${key} 已删除`, 'warning');
+}
+
+// ============================================================
+//  Main Config Editor (config.yml) — 4 tabs
+// ============================================================
+function parseMainConfig(content) {
+  try {
+    const doc = jsyaml.load(content);
+    return {
+      'op-not-cooldown': doc['op-not-cooldown'] ?? true,
+      'identify-texture': doc['identify-texture'] || {},
+      'identify-model': doc['identify-model'] || {},
+      'preset': doc['preset'] || {},
+      'bloom-group': doc['bloom-group'] || {}
+    };
+  } catch (e) {
+    showToast('主配置解析失败: ' + e.message, 'error');
+    return { 'op-not-cooldown': true, 'identify-texture': {}, 'identify-model': {}, 'preset': {}, 'bloom-group': {} };
+  }
+}
+
+function serializeMainConfig() {
+  if (!STATE.configData) return '';
+  const out = {
+    'op-not-cooldown': STATE.configData['op-not-cooldown'],
+    'identify-texture': STATE.configData['identify-texture'],
+    'identify-model': STATE.configData['identify-model'],
+    'preset': STATE.configData['preset'],
+    'bloom-group': STATE.configData['bloom-group']
+  };
+  return jsyaml.dump(out, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"' });
+}
+
+function renderMainConfigEditor() {
+  let html = `<div class="fe-header">⚙️ 主配置编辑 <span style="color:var(--text-dim);font-size:12px;font-weight:400">${escapeHtml(STATE.currentFile || '')}</span></div>`;
+  html += `<div class="tabs">
+    <div class="tab ${STATE.configActiveTab === 'presets' ? 'active' : ''}" onclick="switchConfigTab('presets')">预设</div>
+    <div class="tab ${STATE.configActiveTab === 'identify-texture' ? 'active' : ''}" onclick="switchConfigTab('identify-texture')">贴图识别</div>
+    <div class="tab ${STATE.configActiveTab === 'identify-model' ? 'active' : ''}" onclick="switchConfigTab('identify-model')">模型识别</div>
+    <div class="tab ${STATE.configActiveTab === 'bloom-group' ? 'active' : ''}" onclick="switchConfigTab('bloom-group')">绽放组</div>
+  </div>`;
+  if (STATE.configActiveTab === 'presets') html += renderPresetsTab();
+  else if (STATE.configActiveTab === 'identify-texture') html += renderIdentifyTextureTab();
+  else if (STATE.configActiveTab === 'identify-model') html += renderIdentifyModelTab();
+  else if (STATE.configActiveTab === 'bloom-group') html += renderBloomGroupTab();
+  return html;
+}
+
+function switchConfigTab(tab) {
+  STATE.configActiveTab = tab;
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+}
+
+function attachMainConfigEvents() {
+  if (STATE.configActiveTab === 'presets') attachPresetEvents();
+  else if (STATE.configActiveTab === 'identify-texture') attachTableEvents('identify-texture');
+  else if (STATE.configActiveTab === 'identify-model') attachTableEvents('identify-model');
+  else if (STATE.configActiveTab === 'bloom-group') attachBloomGroupEvents();
+}
+
+// ===== Tab 1: Presets (nested tree) =====
+function renderPresetsTab() {
+  let html = `<div class="fe-section">
+    <div class="fe-section-title"><span>预设树 (支持无限嵌套)</span>
+      <button class="btn btn-sm btn-green" onclick="addPresetRoot()">+ 添加顶层节点</button>
+    </div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">点击节点编辑，叶子节点(有 mode/view)才可设为预设。</div>`;
+  html += `<div class="preset-tree" id="preset-tree">${renderPresetNodes(STATE.configData.preset, [])}</div>`;
+  html += `</div>`;
+  // 选中节点的编辑器
+  if (STATE.presetActivePath) {
+    const node = getPresetNodeByPath(STATE.presetActivePath);
+    if (node && isLeafPreset(node)) {
+      html += renderPresetDetailEditor(node, STATE.presetActivePath);
+    } else if (node) {
+      html += renderPresetFolderEditor(node, STATE.presetActivePath);
+    }
+  }
+  return html;
+}
+
+function renderPresetNodes(node, path) {
+  let html = '';
+  if (!node || typeof node !== 'object') return html;
+  Object.keys(node).forEach(key => {
+    const child = node[key];
+    const childPath = [...path, key];
+    const pathStr = childPath.join('/');
+    const isLeaf = isLeafPreset(child);
+    const isActive = STATE.presetActivePath === pathStr;
+    const meta = isLeaf ? `${child.mode || ''} · ${child.view || ''}` : (typeof child === 'object' ? `${Object.keys(child).length} 项` : '');
+    html += `<div class="preset-node">
+      <div class="preset-row ${isActive ? 'active' : ''}" onclick="selectPreset('${escapePath(pathStr)}')">
+        <span class="preset-arrow ${isLeaf ? 'leaf' : ''}">▶</span>
+        <span class="preset-icon">${isLeaf ? '🍃' : '📁'}</span>
+        <span class="preset-name">${escapeHtml(key)}</span>
+        <span class="preset-meta">${escapeHtml(meta)}</span>
+        ${isLeaf ? `<span class="row-del" onclick="event.stopPropagation();deletePreset('${escapePath(pathStr)}')">✕</span>` : `<button class="btn btn-sm" style="margin-left:8px" onclick="event.stopPropagation();addPresetChild('${escapePath(pathStr)}')">+ 子节点</button><span class="row-del" onclick="event.stopPropagation();deletePreset('${escapePath(pathStr)}')">✕</span>`}
+      </div>
+      ${!isLeaf ? `<div class="preset-node">${renderPresetNodes(child, childPath)}</div>` : ''}
+    </div>`;
+  });
+  return html;
+}
+
+function isLeafPreset(node) {
+  return node && typeof node === 'object' && ('mode' in node || 'view' in node);
+}
+
+function getPresetNodeByPath(pathStr) {
+  const parts = pathStr.split('/');
+  let node = STATE.configData.preset;
+  for (const p of parts) {
+    if (!node || typeof node !== 'object') return null;
+    node = node[p];
+  }
+  return node;
+}
+
+function selectPreset(pathStr) {
+  STATE.presetActivePath = pathStr;
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+}
+
+function findTextureByValueName(valueName) {
+  if (!valueName) return null;
+  const itData = STATE.configData['identify-texture'] || {};
+  const entry = itData[valueName];
+  if (!entry || !entry.path) return null;
+  return findTextureBlobByPath(entry.path);
+}
+
+function renderPresetDetailEditor(node, pathStr) {
+  const modes = ['main-hand', 'off-hand', 'dragon-slot', 'inventory', 'direct-bloom'];
+  const valueStr = String(node.value ?? '');
+  const values = valueStr ? valueStr.split(',').map(s => s.trim()).filter(s => s) : [];
+  const isDirectBloom = node.mode === 'direct-bloom';
+  let html = `<div class="preset-detail">
+    <div class="fe-section-title"><span>编辑预设: ${escapeHtml(pathStr.split('/').pop())}</span>
+      ${isDirectBloom ? `<button class="btn btn-sm btn-primary" onclick="playPresetPreview('${escapeHtml(pathStr)}')">▶ 播放预览</button>` : `<span style="font-size:11px;color:var(--text-dim)">仅 direct-bloom 支持预览</span>`}
+    </div>
+    <div class="pd-grid">
+      <div class="field"><label>mode (模式)</label>
+        <select data-preset-field="mode" data-preset-path="${escapeHtml(pathStr)}">
+          ${modes.map(m => `<option value="${m}" ${node.mode === m ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>view (texture/ 或 model/ 下的文件名)</label>
+        <input type="text" value="${escapeHtml(String(node.view ?? ''))}" data-preset-field="view" data-preset-path="${escapeHtml(pathStr)}">
+      </div>
+      <div class="field" style="grid-column: span 2"><label>value (可添加多个值${isDirectBloom ? '，对应 identify-texture 的名字' : ''})</label>
+        <div class="value-tags" data-value-tags="${escapeHtml(pathStr)}">
+          ${values.map((v, i) => {
+            const blob = isDirectBloom ? findTextureByValueName(v) : null;
+            const thumb = blob ? `<img src="${blob.url}" style="width:18px;height:18px;object-fit:contain;border-radius:2px;vertical-align:middle" title="${escapeHtml(blob.path)}">` : '';
+            return `<span class="value-tag">${thumb}${escapeHtml(v)}<span class="tag-del" data-value-del="${escapeHtml(pathStr)}" data-idx="${i}">×</span></span>`;
+          }).join('')}
+          ${values.length === 0 ? '<span style="color:var(--text-dim);font-size:12px;padding:4px">暂无值，在下方输入并添加</span>' : ''}
+        </div>
+        <div class="value-add-row">
+          <input type="text" placeholder="输入值后回车或点+添加" data-value-input="${escapeHtml(pathStr)}" style="flex:1">
+          <button class="btn btn-sm" data-value-add="${escapeHtml(pathStr)}">+</button>
+        </div>
+      </div>
+      <div class="field"><label>group (绽放组，可空)</label>
+        <input type="text" value="${escapeHtml(String(node.group ?? ''))}" data-preset-field="group" data-preset-path="${escapeHtml(pathStr)}">
+      </div>
+      <div class="field"><label>duration (秒, -1 = 永久)</label>
+        <input type="number" value="${node.duration ?? 60}" data-preset-field="duration" data-preset-path="${escapeHtml(pathStr)}">
+      </div>
+    </div>
+  </div>`;
+  return html;
+}
+
+function renderPresetFolderEditor(node, pathStr) {
+  let html = `<div class="preset-detail">
+    <div class="fe-section-title"><span>文件夹节点: ${escapeHtml(pathStr.split('/').pop())}</span>
+      <button class="btn btn-sm btn-green" onclick="addPresetChild('${escapeHtml(pathStr)}')">+ 添加子节点</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim)">该节点包含 ${Object.keys(node).length} 个子节点，无法直接设为预设。</div>
+  </div>`;
+  return html;
+}
+
+function attachPresetEvents() {
+  document.querySelectorAll('[data-preset-field]').forEach(el => {
+    el.addEventListener('change', () => {
+      const pathStr = el.dataset.presetPath;
+      const field = el.dataset.presetField;
+      const node = getPresetNodeByPath(pathStr);
+      if (!node) return;
+      let val = el.value;
+      if (field === 'duration') val = parseFloat(val) || 0;
+      node[field] = val;
+      scheduleAutoSave();
+    });
+  });
+  // value 标签删除
+  document.querySelectorAll('[data-value-del]').forEach(el => {
+    el.addEventListener('click', () => {
+      const pathStr = el.dataset.valueDel;
+      const idx = parseInt(el.dataset.idx);
+      const node = getPresetNodeByPath(pathStr);
+      if (!node) return;
+      const values = String(node.value ?? '').split(',').map(s => s.trim()).filter(s => s);
+      values.splice(idx, 1);
+      node.value = values.join(',');
+      scheduleAutoSave();
+      document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+      attachMainConfigEvents();
+    });
+  });
+  // value 添加按钮
+  document.querySelectorAll('[data-value-add]').forEach(el => {
+    el.addEventListener('click', () => addPresetValue(el.dataset.valueAdd));
+  });
+  // value 输入框回车添加
+  document.querySelectorAll('[data-value-input]').forEach(el => {
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addPresetValue(el.dataset.valueInput); }
+    });
+  });
+}
+
+function addPresetValue(pathStr) {
+  const input = document.querySelector(`[data-value-input="${CSS.escape(pathStr)}"]`);
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  const node = getPresetNodeByPath(pathStr);
+  if (!node) return;
+  const values = String(node.value ?? '').split(',').map(s => s.trim()).filter(s => s);
+  if (values.includes(val)) { showToast('该值已存在', 'error'); return; }
+  values.push(val);
+  node.value = values.join(',');
+  scheduleAutoSave();
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+}
+
+async function playPresetPreview(pathStr) {
+  const node = getPresetNodeByPath(pathStr);
+  if (!node) { showToast('找不到预设节点: ' + pathStr, 'error'); return; }
+  if (node.mode !== 'direct-bloom') {
+    showToast('只有 direct-bloom 模式支持预览', 'warning');
+    return;
+  }
+  if (!node.view) { showToast('该预设未设置 view，无法预览', 'error'); return; }
+  // 解析所有 value，每个 value 对应一个贴图路径
+  const valueNames = String(node.value ?? '').split(',').map(s => s.trim()).filter(s => s);
+  if (valueNames.length === 0) { showToast('该预设未设置 value，无法获取贴图', 'error'); return; }
+  const itData = STATE.configData['identify-texture'] || {};
+  const texPaths = [];
+  const blobs = [];
+  for (const vn of valueNames) {
+    const entry = itData[vn];
+    if (!entry || !entry.path) {
+      showToast('identify-texture 中找不到: ' + vn, 'error');
+      return;
+    }
+    const tp = entry.path;
+    const blob = findTextureBlobByPath(tp);
+    texPaths.push(tp);
+    blobs.push(blob);
+    if (!blob) {
+      showToast('贴图未加载到缓存: ' + tp + '（请先设置 DragonCore 贴图目录）', 'warning');
+    }
+  }
+  // 先保存当前文件
+  try {
+    if (saveTimer) { clearTimeout(saveTimer); await doSave(); }
+  } catch (e) {
+    console.error('[playPresetPreview] doSave 失败:', e);
+  }
+  // 保存返回信息
+  STATE.previewReturnFile = STATE.currentFile;
+  STATE.previewReturnFileType = STATE.currentFileType;
+  // 从 STATE.files 模糊匹配 view 文件
+  const viewRaw = String(node.view).replace(/\\/g, '/').replace(/^\//, '').replace(/\.(yml|yaml)$/i, '');
+  const candidates = STATE.files
+    .map(f => f.path)
+    .filter(p => {
+      const lower = p.toLowerCase();
+      return (lower.endsWith('.yml') || lower.endsWith('.yaml')) && lower.includes(viewRaw.toLowerCase());
+    })
+    .sort((a, b) => {
+      const aTex = a.toLowerCase().startsWith('texture/') ? 0 : 1;
+      const bTex = b.toLowerCase().startsWith('texture/') ? 0 : 1;
+      if (aTex !== bTex) return aTex - bTex;
+      return a.length - b.length;
+    });
+  if (candidates.length === 0) {
+    showToast('找不到 view 对应的文件: ' + node.view, 'error');
+    return;
+  }
+  const viewPath = candidates[0];
+  if (viewPath.toLowerCase().startsWith('model/')) {
+    showToast('模型暂不支持预览', 'warning');
+    return;
+  }
+  try {
+    const resp = await fetch(`/api/files/${encodeURIComponent(viewPath)}`);
+    if (!resp.ok) { showToast('加载 view 文件失败: ' + viewPath, 'error'); return; }
+    const data = await resp.json();
+    // 加载动画配置
+    const config = parseYML(data.content);
+    // 只取前 valueNames.length 层（value 有几个就绽放几个）
+    const allKeys = Object.keys(config.setting).sort((a, b) => parseInt(a) - parseInt(b));
+    const keepKeys = allKeys.slice(0, valueNames.length);
+    if (keepKeys.length < valueNames.length) {
+      showToast(`view 文件只有 ${allKeys.length} 层，但 value 有 ${valueNames.length} 个`, 'error');
+      return;
+    }
+    const newSetting = {};
+    keepKeys.forEach((k, idx) => {
+      const ring = config.setting[k];
+      // 第 idx 层用第 idx 个 value 的贴图
+      const blob = blobs[idx];
+      if (blob) {
+        ring.imageUrl = blob.url;
+      } else {
+        ring.imageUrl = '';
+      }
+      // 重新编号为 1..N
+      newSetting[String(idx + 1)] = ring;
+    });
+    config.setting = newSetting;
+    STATE.config = config;
+    const firstKey = Object.keys(config.setting)[0];
+    STATE.selectedRingId = firstKey ? config.setting[firstKey].id : null;
+    STATE.selectedRingIds = STATE.selectedRingId != null ? [STATE.selectedRingId] : [];
+    STATE.showAllRings = true;
+    STATE.currentTime = 0;
+    STATE.playing = false;
+    undoStack = [];
+    updateUndoButton();
+    STATE.previewing = true;
+    try {
+      rebuildAllRings();
+    } catch (e) {
+      console.error('[playPresetPreview] 3D 渲染失败:', e);
+      showToast('3D 渲染失败: ' + e.message, 'error');
+    }
+    updateTotalDuration();
+    updateShowAllButton();
+    // 切换到 texture 编辑器视图
+    document.getElementById('texture-editor').classList.remove('hidden');
+    document.getElementById('form-editor').classList.add('hidden');
+    if (!threeInitialized) { init3D(); threeInitialized = true; }
+    document.getElementById('current-file-display').textContent = `👁 预览: ${viewPath.split('/').pop()} (${valueNames.length}环)`;
+    renderSidebar();
+    showToast(`预览 ${valueNames.length} 个魂环: ${texPaths.join(', ')}`, 'success');
+    // 等待 DOM 更新后 resize 并播放
+    setTimeout(() => {
+      try {
+        resizeRenderer();
+        if (!STATE.playing) togglePlay();
+      } catch (e) {
+        console.error('[playPresetPreview] togglePlay 失败:', e);
+        showToast('播放失败: ' + e.message, 'error');
+      }
+    }, 600);
+  } catch (e) {
+    console.error('[playPresetPreview] 加载预览失败:', e);
+    showToast('加载预览失败: ' + e.message, 'error');
+    STATE.previewing = false;
+  }
+}
+
+async function exitPreview() {
+  STATE.previewing = false;
+  STATE.playing = false;
+  const retFile = STATE.previewReturnFile;
+  const retType = STATE.previewReturnFileType;
+  STATE.previewReturnFile = null;
+  STATE.previewReturnFileType = null;
+  if (retFile) {
+    await loadFile(retFile);
+  } else {
+    // 没有返回文件，清空
+    document.getElementById('texture-editor').classList.add('hidden');
+    document.getElementById('form-editor').classList.remove('hidden');
+  }
+}
+
+function addPresetRoot() {
+  const name = prompt('请输入顶层节点名:');
+  if (!name || !name.trim()) return;
+  if (STATE.configData.preset[name.trim()]) { showToast('节点已存在', 'warning'); return; }
+  STATE.configData.preset[name.trim()] = {};
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+function addPresetChild(pathStr) {
+  const name = prompt('请输入子节点名:');
+  if (!name || !name.trim()) return;
+  const node = getPresetNodeByPath(pathStr);
+  if (!node) return;
+  if (node[name.trim()]) { showToast('子节点已存在', 'warning'); return; }
+  // 默认创建为叶子节点
+  node[name.trim()] = { mode: 'main-hand', view: '', group: '', duration: 60 };
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+function deletePreset(pathStr) {
+  if (!confirm(`确定删除节点 "${pathStr}"？`)) return;
+  const parts = pathStr.split('/');
+  let node = STATE.configData.preset;
+  for (let i = 0; i < parts.length - 1; i++) {
+    node = node[parts[i]];
+    if (!node) return;
+  }
+  delete node[parts[parts.length - 1]];
+  if (STATE.presetActivePath === pathStr) STATE.presetActivePath = null;
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+// ===== Tab 2: Identify Texture =====
+function findTextureBlobByPath(pathStr) {
+  if (!pathStr) return null;
+  const target = pathStr.replace(/\\/g, '/').replace(/^\//, '').toLowerCase();
+  // 精确匹配
+  let hit = textureBlobCache.find(b => b.path.toLowerCase() === target);
+  if (hit) return hit;
+  // 尾部匹配（path 可能不含目录前缀）
+  hit = textureBlobCache.find(b => b.path.toLowerCase().endsWith(target));
+  if (hit) return hit;
+  // 文件名匹配
+  const baseName = target.split('/').pop();
+  if (baseName) {
+    hit = textureBlobCache.find(b => b.path.toLowerCase().endsWith('/' + baseName) || b.path.toLowerCase() === baseName);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+function renderIdentifyTextureTab() {
+  const data = STATE.configData['identify-texture'];
+  const keys = Object.keys(data);
+  let html = `<div class="fe-section">
+    <div class="fe-section-title"><span>贴图识别 (${keys.length})</span>
+      <button class="btn btn-sm btn-green" onclick="addIdentifyTextureRow()">+ 添加</button>
+    </div>`;
+  html += `<table class="table-editor"><thead><tr>
+    <th style="width:18%">名称</th>
+    <th style="width:22%">check-lore</th>
+    <th style="width:22%">check-name</th>
+    <th>path</th>
+    <th style="width:60px">预览</th>
+    <th style="width:40px"></th>
+  </tr></thead><tbody>`;
+  keys.forEach(key => {
+    const row = data[key];
+    const pathVal = row['path'] ?? '';
+    const blob = findTextureBlobByPath(pathVal);
+    const thumb = blob
+      ? `<img src="${blob.url}" style="max-width:48px;max-height:48px;object-fit:contain;border:1px solid var(--border);border-radius:3px" title="${escapeHtml(blob.path)}">`
+      : `<span style="color:var(--text-dim);font-size:11px">${pathVal ? '未找到' : ''}</span>`;
+    html += `<tr>
+      <td><input type="text" value="${escapeHtml(key)}" data-it-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(row['check-lore'] ?? '')}" data-it-field="check-lore" data-it-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(row['check-name'] ?? '')}" data-it-field="check-name" data-it-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(pathVal)}" data-it-field="path" data-it-key="${escapeHtml(key)}"></td>
+      <td style="text-align:center">${thumb}</td>
+      <td><span class="row-del" onclick="deleteIdentifyTextureRow('${escapeHtml(key)}')">✕</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);line-height:1.8">说明: check-lore 检测物品 lore 是否包含；check-name 检测物品名是否包含；两者都为空时不检测。path 为贴图文件相对路径。</div>`;
+  return html;
+}
+
+function attachTableEvents(section) {
+  const prefix = section === 'identify-texture' ? 'it' : 'im';
+  document.querySelectorAll(`[data-${prefix}-key]`).forEach(el => {
+    el.addEventListener('change', () => {
+      const oldKey = el.dataset[`${prefix}Key`];
+      const newKey = el.value.trim();
+      if (!newKey) { showToast('名称不能为空', 'warning'); document.getElementById('form-editor').innerHTML = renderMainConfigEditor(); attachMainConfigEvents(); return; }
+      if (newKey !== oldKey) {
+        const data = STATE.configData[section];
+        if (data[newKey]) { showToast('名称已存在', 'warning'); return; }
+        data[newKey] = data[oldKey];
+        delete data[oldKey];
+        document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+        attachMainConfigEvents();
+      }
+      scheduleAutoSave();
+    });
+  });
+  document.querySelectorAll(`[data-${prefix}-field]`).forEach(el => {
+    el.addEventListener('change', () => {
+      const key = el.dataset[`${prefix}Key`];
+      const field = el.dataset[`${prefix}Field`];
+      const row = STATE.configData[section][key];
+      if (!row) return;
+      row[field] = el.value;
+      scheduleAutoSave();
+    });
+  });
+}
+
+function addIdentifyTextureRow() {
+  const name = prompt('请输入贴图识别名:');
+  if (!name || !name.trim()) return;
+  if (STATE.configData['identify-texture'][name.trim()]) { showToast('名称已存在', 'warning'); return; }
+  STATE.configData['identify-texture'][name.trim()] = { path: '' };
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+function deleteIdentifyTextureRow(key) {
+  if (!confirm(`确定删除 "${key}"？`)) return;
+  delete STATE.configData['identify-texture'][key];
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+// ===== Tab 3: Identify Model =====
+function renderIdentifyModelTab() {
+  const data = STATE.configData['identify-model'];
+  const keys = Object.keys(data);
+  let html = `<div class="fe-section">
+    <div class="fe-section-title"><span>模型识别 (${keys.length})</span>
+      <button class="btn btn-sm btn-green" onclick="addIdentifyModelRow()">+ 添加</button>
+    </div>`;
+  html += `<table class="table-editor"><thead><tr>
+    <th style="width:20%">名称</th>
+    <th style="width:30%">check-lore</th>
+    <th style="width:30%">check-name</th>
+    <th>mm-name</th>
+    <th style="width:40px"></th>
+  </tr></thead><tbody>`;
+  keys.forEach(key => {
+    const row = data[key];
+    html += `<tr>
+      <td><input type="text" value="${escapeHtml(key)}" data-im-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(row['check-lore'] ?? '')}" data-im-field="check-lore" data-im-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(row['check-name'] ?? '')}" data-im-field="check-name" data-im-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(row['mm-name'] ?? '')}" data-im-field="mm-name" data-im-key="${escapeHtml(key)}"></td>
+      <td><span class="row-del" onclick="deleteIdentifyModelRow('${escapeHtml(key)}')">✕</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);line-height:1.8">说明: mm-name 是 MythicMob 的配置名。</div>`;
+  return html;
+}
+
+function addIdentifyModelRow() {
+  const name = prompt('请输入模型识别名:');
+  if (!name || !name.trim()) return;
+  if (STATE.configData['identify-model'][name.trim()]) { showToast('名称已存在', 'warning'); return; }
+  STATE.configData['identify-model'][name.trim()] = { 'mm-name': '' };
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+function deleteIdentifyModelRow(key) {
+  if (!confirm(`确定删除 "${key}"？`)) return;
+  delete STATE.configData['identify-model'][key];
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+// ===== Tab 4: Bloom Groups =====
+function renderBloomGroupTab() {
+  const data = STATE.configData['bloom-group'];
+  const keys = Object.keys(data);
+  let html = `<div class="fe-section">
+    <div class="fe-section-title"><span>管理员无冷却</span></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+      <input type="checkbox" id="op-not-cooldown-cb" ${STATE.configData['op-not-cooldown'] ? 'checked' : ''} onchange="toggleOpNotCooldown()">
+      <span>op-not-cooldown (管理员无冷却)</span>
+    </label>
+  </div>`;
+  html += `<div class="fe-section">
+    <div class="fe-section-title"><span>绽放组 (${keys.length})</span>
+      <button class="btn btn-sm btn-green" onclick="addBloomGroupRow()">+ 添加</button>
+    </div>`;
+  html += `<table class="table-editor"><thead><tr>
+    <th style="width:40%">组名</th>
+    <th>cooldown (秒)</th>
+    <th style="width:40px"></th>
+  </tr></thead><tbody>`;
+  keys.forEach(key => {
+    const row = data[key];
+    html += `<tr>
+      <td><input type="text" value="${escapeHtml(key)}" data-bg-key="${escapeHtml(key)}"></td>
+      <td><input type="number" value="${row.cooldown ?? 0}" data-bg-field="cooldown" data-bg-key="${escapeHtml(key)}"></td>
+      <td><span class="row-del" onclick="deleteBloomGroupRow('${escapeHtml(key)}')">✕</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);line-height:1.8">说明: 同组之间冷却共享，同组之间不能同时绽放。</div>`;
+  return html;
+}
+
+function attachBloomGroupEvents() {
+  document.querySelectorAll('[data-bg-key]').forEach(el => {
+    if (el.dataset.bgField) {
+      el.addEventListener('change', () => {
+        const key = el.dataset.bgKey;
+        const row = STATE.configData['bloom-group'][key];
+        if (!row) return;
+        row.cooldown = parseFloat(el.value) || 0;
+        scheduleAutoSave();
+      });
+    } else {
+      el.addEventListener('change', () => {
+        const oldKey = el.dataset.bgKey;
+        const newKey = el.value.trim();
+        if (!newKey) { showToast('组名不能为空', 'warning'); document.getElementById('form-editor').innerHTML = renderMainConfigEditor(); attachMainConfigEvents(); return; }
+        if (newKey !== oldKey) {
+          const data = STATE.configData['bloom-group'];
+          if (data[newKey]) { showToast('组名已存在', 'warning'); return; }
+          data[newKey] = data[oldKey];
+          delete data[oldKey];
+          document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+          attachMainConfigEvents();
+        }
+        scheduleAutoSave();
+      });
+    }
+  });
+}
+
+function toggleOpNotCooldown() {
+  STATE.configData['op-not-cooldown'] = document.getElementById('op-not-cooldown-cb').checked;
+  scheduleAutoSave();
+}
+
+function addBloomGroupRow() {
+  const name = prompt('请输入组名:');
+  if (!name || !name.trim()) return;
+  if (STATE.configData['bloom-group'][name.trim()]) { showToast('组名已存在', 'warning'); return; }
+  STATE.configData['bloom-group'][name.trim()] = { cooldown: 30 };
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+function deleteBloomGroupRow(key) {
+  if (!confirm(`确定删除组 "${key}"？`)) return;
+  delete STATE.configData['bloom-group'][key];
+  document.getElementById('form-editor').innerHTML = renderMainConfigEditor();
+  attachMainConfigEvents();
+  scheduleAutoSave();
+}
+
+// ============================================================
+//  World Texture Editor (world-texture.yml) — table
+// ============================================================
+function parseWorldTexture(content) {
+  try {
+    const doc = jsyaml.load(content);
+    if (!doc) return {};
+    return doc;
+  } catch (e) {
+    showToast('世界贴图配置解析失败: ' + e.message, 'error');
+    return {};
+  }
+}
+
+function serializeWorldTexture() {
+  if (!STATE.worldTextureData) return '';
+  return jsyaml.dump(STATE.worldTextureData, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"' });
+}
+
+function renderWorldTextureEditor() {
+  const data = STATE.worldTextureData;
+  const keys = Object.keys(data);
+  let html = `<div class="fe-header">🌍 世界贴图编辑 <span style="color:var(--text-dim);font-size:12px;font-weight:400">${escapeHtml(STATE.currentFile || '')}</span></div>`;
+  html += `<div class="fe-section">
+    <div class="fe-section-title"><span>世界贴图 (${keys.length})</span>
+      <button class="btn btn-sm btn-green" onclick="addWorldTextureRow()">+ 添加</button>
+    </div>`;
+  html += `<table class="table-editor"><thead><tr>
+    <th style="width:18%">名称</th>
+    <th style="width:14%">world</th>
+    <th style="width:12%">x</th>
+    <th style="width:12%">y</th>
+    <th style="width:12%">z</th>
+    <th>preset</th>
+    <th style="width:40px"></th>
+  </tr></thead><tbody>`;
+  keys.forEach(key => {
+    const row = data[key];
+    const loc = row.location || { x: 0, y: 0, z: 0 };
+    html += `<tr>
+      <td><input type="text" value="${escapeHtml(key)}" data-wt-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(row.world ?? '')}" data-wt-field="world" data-wt-key="${escapeHtml(key)}"></td>
+      <td><input type="number" value="${loc.x ?? 0}" data-wt-field="location.x" data-wt-key="${escapeHtml(key)}"></td>
+      <td><input type="number" value="${loc.y ?? 0}" data-wt-field="location.y" data-wt-key="${escapeHtml(key)}"></td>
+      <td><input type="number" value="${loc.z ?? 0}" data-wt-field="location.z" data-wt-key="${escapeHtml(key)}"></td>
+      <td><input type="text" value="${escapeHtml(row.preset ?? '')}" data-wt-field="preset" data-wt-key="${escapeHtml(key)}"></td>
+      <td><span class="row-del" onclick="deleteWorldTextureRow('${escapeHtml(key)}')">✕</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);line-height:1.8">说明: world 为世界名，location 为坐标，preset 引用主 config 中的预设名。</div>`;
+  return html;
+}
+
+function attachWorldTextureEvents() {
+  document.querySelectorAll('[data-wt-key]').forEach(el => {
+    if (el.dataset.wtField) {
+      el.addEventListener('change', () => {
+        const key = el.dataset.wtKey;
+        const field = el.dataset.wtField;
+        const row = STATE.worldTextureData[key];
+        if (!row) return;
+        if (field === 'world' || field === 'preset') {
+          row[field] = el.value;
+        } else if (field.startsWith('location.')) {
+          if (!row.location) row.location = {};
+          row.location[field.split('.')[1]] = parseFloat(el.value) || 0;
+        }
+        scheduleAutoSave();
+      });
+    } else {
+      el.addEventListener('change', () => {
+        const oldKey = el.dataset.wtKey;
+        const newKey = el.value.trim();
+        if (!newKey) { showToast('名称不能为空', 'warning'); document.getElementById('form-editor').innerHTML = renderWorldTextureEditor(); attachWorldTextureEvents(); return; }
+        if (newKey !== oldKey) {
+          if (STATE.worldTextureData[newKey]) { showToast('名称已存在', 'warning'); return; }
+          STATE.worldTextureData[newKey] = STATE.worldTextureData[oldKey];
+          delete STATE.worldTextureData[oldKey];
+          document.getElementById('form-editor').innerHTML = renderWorldTextureEditor();
+          attachWorldTextureEvents();
+        }
+        scheduleAutoSave();
+      });
+    }
+  });
+}
+
+function addWorldTextureRow() {
+  const name = prompt('请输入世界贴图名:');
+  if (!name || !name.trim()) return;
+  if (STATE.worldTextureData[name.trim()]) { showToast('名称已存在', 'warning'); return; }
+  STATE.worldTextureData[name.trim()] = { world: 'world', location: { x: 0, y: 0, z: 0 }, preset: '' };
+  document.getElementById('form-editor').innerHTML = renderWorldTextureEditor();
+  attachWorldTextureEvents();
+  scheduleAutoSave();
+}
+
+function deleteWorldTextureRow(key) {
+  if (!confirm(`确定删除 "${key}"？`)) return;
+  delete STATE.worldTextureData[key];
+  document.getElementById('form-editor').innerHTML = renderWorldTextureEditor();
+  attachWorldTextureEvents();
+  scheduleAutoSave();
+}
+
+// ============================================================
+//  Message Config Editor (message.yml)
+// ============================================================
+function parseMessage(content) {
+  try {
+    const doc = jsyaml.load(content);
+    return {
+      player: doc?.player || {},
+      console: doc?.console || {},
+      help: doc?.help || []
+    };
+  } catch (e) {
+    showToast('消息配置解析失败: ' + e.message, 'error');
+    return { player: {}, console: {}, help: [] };
+  }
+}
+
+function serializeMessage() {
+  if (!STATE.messageData) return '';
+  return jsyaml.dump(STATE.messageData, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false, quotingType: '"' });
+}
+
+let msgSectionCollapsed = { player: false, console: false, help: false };
+
+function toggleMsgSection(section) {
+  msgSectionCollapsed[section] = !msgSectionCollapsed[section];
+  document.getElementById('form-editor').innerHTML = renderMessageEditor();
+  attachMessageEvents();
+}
+
+function renderMessageEditor() {
+  let html = `<div class="fe-header">💬 消息配置编辑 <span style="color:var(--text-dim);font-size:12px;font-weight:400">${escapeHtml(STATE.currentFile || '')}</span></div>`;
+  // Player messages
+  const playerKeys = Object.keys(STATE.messageData.player);
+  const pCollapsed = msgSectionCollapsed.player;
+  html += `<div class="fe-section${pCollapsed ? ' collapsed' : ''}">
+    <div class="fe-section-title clickable" onclick="toggleMsgSection('player')"><span>${pCollapsed ? '▶' : '▼'} 玩家消息 (${playerKeys.length})</span>
+      <button class="btn btn-sm btn-green" onclick="event.stopPropagation();addMessageRow('player')">+ 添加</button>
+    </div>`;
+  playerKeys.forEach(key => {
+    html += `<div class="message-row">
+      <input type="text" class="key" value="${escapeHtml(key)}" data-msg-section="player" data-msg-old-key="${escapeHtml(key)}" data-msg-field="key">
+      <input type="text" value="${escapeHtml(String(STATE.messageData.player[key] ?? ''))}" data-msg-section="player" data-msg-key="${escapeHtml(key)}" data-msg-field="value">
+      <span class="row-del" onclick="deleteMessageRow('player','${escapeHtml(key)}')">✕</span>
+    </div>`;
+  });
+  html += `</div>`;
+  // Console messages
+  const consoleKeys = Object.keys(STATE.messageData.console);
+  const cCollapsed = msgSectionCollapsed.console;
+  html += `<div class="fe-section${cCollapsed ? ' collapsed' : ''}">
+    <div class="fe-section-title clickable" onclick="toggleMsgSection('console')"><span>${cCollapsed ? '▶' : '▼'} 控制台消息 (${consoleKeys.length})</span>
+      <button class="btn btn-sm btn-green" onclick="event.stopPropagation();addMessageRow('console')">+ 添加</button>
+    </div>`;
+  consoleKeys.forEach(key => {
+    html += `<div class="message-row">
+      <input type="text" class="key" value="${escapeHtml(key)}" data-msg-section="console" data-msg-old-key="${escapeHtml(key)}" data-msg-field="key">
+      <input type="text" value="${escapeHtml(String(STATE.messageData.console[key] ?? ''))}" data-msg-section="console" data-msg-key="${escapeHtml(key)}" data-msg-field="value">
+      <span class="row-del" onclick="deleteMessageRow('console','${escapeHtml(key)}')">✕</span>
+    </div>`;
+  });
+  html += `</div>`;
+  // Help messages (list)
+  const hCollapsed = msgSectionCollapsed.help;
+  html += `<div class="fe-section${hCollapsed ? ' collapsed' : ''}">
+    <div class="fe-section-title clickable" onclick="toggleMsgSection('help')"><span>${hCollapsed ? '▶' : '▼'} 帮助消息 (${STATE.messageData.help.length})</span>
+      <button class="btn btn-sm btn-green" onclick="event.stopPropagation();addHelpRow()">+ 添加</button>
+    </div>`;
+  STATE.messageData.help.forEach((line, idx) => {
+    html += `<div class="help-row">
+      <input type="text" value="${escapeHtml(String(line ?? ''))}" data-help-idx="${idx}">
+      <span class="row-del" onclick="deleteHelpRow(${idx})">✕</span>
+    </div>`;
+  });
+  html += `</div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);line-height:1.8">
+    <p>占位符: %preset% %view% %entry% %cooldown% %require% %actual% %value% %mode% %type% %index% %name% %key% %error% %version%</p>
+    <p>支持 § 彩色代码</p>
+  </div>`;
+  return html;
+}
+
+function attachMessageEvents() {
+  document.querySelectorAll('[data-msg-field]').forEach(el => {
+    el.addEventListener('change', () => {
+      const section = el.dataset.msgSection;
+      if (el.dataset.msgField === 'key') {
+        const oldKey = el.dataset.msgOldKey;
+        const newKey = el.value.trim();
+        if (!newKey) { showToast('键名不能为空', 'warning'); document.getElementById('form-editor').innerHTML = renderMessageEditor(); attachMessageEvents(); return; }
+        if (newKey !== oldKey) {
+          if (STATE.messageData[section][newKey]) { showToast('键名已存在', 'warning'); return; }
+          STATE.messageData[section][newKey] = STATE.messageData[section][oldKey];
+          delete STATE.messageData[section][oldKey];
+          document.getElementById('form-editor').innerHTML = renderMessageEditor();
+          attachMessageEvents();
+        }
+      } else {
+        const key = el.dataset.msgKey;
+        STATE.messageData[section][key] = el.value;
+      }
+      scheduleAutoSave();
+    });
+  });
+  document.querySelectorAll('[data-help-idx]').forEach(el => {
+    el.addEventListener('change', () => {
+      const idx = parseInt(el.dataset.helpIdx);
+      STATE.messageData.help[idx] = el.value;
+      scheduleAutoSave();
+    });
+  });
+}
+
+function addMessageRow(section) {
+  const key = prompt('请输入键名:');
+  if (!key || !key.trim()) return;
+  if (STATE.messageData[section][key.trim()]) { showToast('键名已存在', 'warning'); return; }
+  STATE.messageData[section][key.trim()] = '';
+  document.getElementById('form-editor').innerHTML = renderMessageEditor();
+  attachMessageEvents();
+  scheduleAutoSave();
+}
+
+function deleteMessageRow(section, key) {
+  if (!confirm(`确定删除 "${key}"？`)) return;
+  delete STATE.messageData[section][key];
+  document.getElementById('form-editor').innerHTML = renderMessageEditor();
+  attachMessageEvents();
+  scheduleAutoSave();
+}
+
+function addHelpRow() {
+  STATE.messageData.help.push('');
+  document.getElementById('form-editor').innerHTML = renderMessageEditor();
+  attachMessageEvents();
+  scheduleAutoSave();
+}
+
+function deleteHelpRow(idx) {
+  STATE.messageData.help.splice(idx, 1);
+  document.getElementById('form-editor').innerHTML = renderMessageEditor();
+  attachMessageEvents();
+  scheduleAutoSave();
+}
+
+// ============================================================
+//  Raw YAML Editor (fallback)
+// ============================================================
+function renderRawYamlEditor() {
+  let html = `<div class="fe-header">📄 YAML 编辑 <span style="color:var(--text-dim);font-size:12px;font-weight:400">${escapeHtml(STATE.currentFile || '')}</span></div>`;
+  html += `<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">原始 YAML 编辑器。修改后自动保存。</div>`;
+  html += `<textarea class="raw-yaml-editor" id="raw-yaml-textarea" spellcheck="false">${escapeHtml(STATE.rawYamlContent)}</textarea>`;
+  return html;
+}
+
+function attachRawYamlEvents() {
+  const ta = document.getElementById('raw-yaml-textarea');
+  if (!ta) return;
+  ta.addEventListener('change', () => {
+    STATE.rawYamlContent = ta.value;
+    scheduleAutoSave();
+  });
+  // Tab 键插入空格
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+      ta.selectionStart = ta.selectionEnd = start + 2;
+    }
+  });
+}
+
+// ============================================================
+//  New File Modal
+// ============================================================
+function openNewFileModal() {
+  document.getElementById('new-file-path').value = '';
+  document.getElementById('new-file-type').value = 'texture';
+  updateNewFilePath();
+  document.getElementById('new-file-modal').classList.add('show');
+  setTimeout(() => document.getElementById('new-file-path').focus(), 100);
+}
+
+function closeNewFileModal() {
+  document.getElementById('new-file-modal').classList.remove('show');
+}
+
+function updateNewFilePath() {
+  const type = document.getElementById('new-file-type').value;
+  const input = document.getElementById('new-file-path');
+  input.placeholder = type === 'texture' ? '贴图-测试' : '模型-测试';
+}
+
+function confirmCreateFile() {
+  let name = document.getElementById('new-file-path').value.trim();
+  const type = document.getElementById('new-file-type').value;
+  if (!name) {
+    showToast('请输入文件名', 'warning');
+    return;
+  }
+  // 去掉用户误输入的目录前缀和后缀
+  name = name.replace(/^(texture|model)\//i, '').replace(/\.ya?ml$/i, '').trim();
+  if (!name) {
+    showToast('文件名不能为空', 'warning');
+    return;
+  }
+  const path = type + '/' + name + '.yml';
+  // 生成默认内容
+  let content = '';
+  if (type === 'texture') {
+    content = 'setting:\n  1:\n    delay: 0\n    texture:\n      translate-x: 0\n      translate-y: 2.35\n      translate-z: 0\n      rotate-x: 90\n      rotate-y: 0\n      rotate-z: 0\n    animations:\n      translate-animation:\n        direction: \'z\'\n        delay: 0\n        distance: 2.30\n        duration: 3000\n        cycle-count: 1\n        fixed: true\n';
+  } else if (type === 'model') {
+    content = 'setting:\n  1:\n    delay: 0\n    location:\n      x: 0\n      y: 0\n      z: 3\n';
+  }
+  closeNewFileModal();
+  createFile(path, content);
+}
+
+// ============================================================
+//  Settings Modal (DragonCore dir)
+// ============================================================
+function openSettingsModal() {
+  document.getElementById('dc-dir-display').textContent = dragonCoreDir || '';
+  const countEl = document.getElementById('dc-tex-count');
+  if (countEl) {
+    countEl.textContent = textureListCache.length > 0 ? `已扫描到 ${textureListCache.length} 个贴图文件` : (dragonCoreDir ? '点击下方刷新或重新选择目录' : '未设置目录');
+  }
+  document.getElementById('settings-modal').classList.add('show');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.remove('show');
+}
+
+// ===== 前端目录选择（webkitdirectory）=====
+
+// 处理 DragonCore 贴图目录选择
+async function handleDcFolderSelect(files, displayElId) {
+  const fileList = Array.from(files || []);
+  if (fileList.length === 0) return;
+  const firstPath = fileList[0].webkitRelativePath || '';
+  const dirName = firstPath.split('/')[0] || '';
+  const imgExts = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'];
+  const texFiles = [];
+  textureBlobCache = [];
+  fileList.forEach(f => {
+    const relPath = f.webkitRelativePath || f.name;
+    const lower = relPath.toLowerCase();
+    if (imgExts.some(ext => lower.endsWith(ext))) {
+      const relFromRoot = relPath.substring(dirName.length + 1);
+      texFiles.push(relFromRoot);
+      textureBlobCache.push({ path: relFromRoot, url: URL.createObjectURL(f), file: f });
+    }
+  });
+  textureListCache = texFiles;
+  dragonCoreDir = dirName;
+  localStorage.setItem('tuolingbloom_dc_dir', dragonCoreDir);
+  await fetch('/api/dc-dir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dir: dragonCoreDir }) }).catch(() => {});
+  const display = document.getElementById(displayElId);
+  if (display) display.textContent = dragonCoreDir;
+  // 持久化到 IndexedDB
+  try {
+    const entries = [];
+    fileList.forEach(f => {
+      const relPath = f.webkitRelativePath || f.name;
+      const lower = relPath.toLowerCase();
+      if (imgExts.some(ext => lower.endsWith(ext))) {
+        const relFromRoot = relPath.substring(dirName.length + 1);
+        entries.push({ path: relFromRoot, blob: f });
+      }
+    });
+    await texIDBSaveAll(entries);
+  } catch (e) { /* IndexedDB 失败不阻断 */ }
+  checkOnboardingComplete();
+  showToast(`已加载 ${textureListCache.length} 个贴图`, 'success');
+  if (STATE.currentFileType === 'texture') {
+    resolveTexturePaths();
+    rebuildAllRings();
+    renderSidebar();
+  }
+}
+
+function checkOnboardingComplete() {
+  document.getElementById('onboard-finish-btn').disabled = !dragonCoreDir;
+}
+
+async function finishOnboarding() {
+  document.getElementById('onboarding-modal').style.display = 'none';
+  // 文件已在选目录时同步，这里只需加载第一个文件
+  if (STATE.files.length > 0) {
+    const configFile = STATE.files.find(f => f.path === 'config.yml' || f.path.endsWith('/config.yml'));
+    const targetFile = configFile || STATE.files[0];
+    if (targetFile) await loadFile(targetFile.path);
+  }
+}
+
+// ===== 浏览器原生目录选择（触发 input，change 事件在 setupTexImport 绑定）=====
+function openDirBrowser() {
+  const input = document.getElementById('dc-folder-input');
+  if (!input) return;
+  input.value = '';
+  input.click();
+}
+
+// ============================================================
+//  Toast
+// ============================================================
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = 'all .3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+// ============================================================
+//  Texture import events setup
+// ============================================================
+(function setupTexImport() {
+  function init() {
+    const texZone = document.getElementById('tex-import-zone');
+    const texInput = document.getElementById('tex-file-input');
+    if (texZone) {
+      texZone.addEventListener('click', () => texInput.click());
+      texZone.addEventListener('dragover', (e) => { e.preventDefault(); texZone.classList.add('dragover'); });
+      texZone.addEventListener('dragleave', () => texZone.classList.remove('dragover'));
+      texZone.addEventListener('drop', (e) => {
+        e.preventDefault(); texZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (ev) => { document.getElementById('tex-url-input').value = ev.target.result; }; reader.readAsDataURL(file); }
+      });
+    }
+    if (texInput) {
+      texInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (ev) => { document.getElementById('tex-url-input').value = ev.target.result; }; reader.readAsDataURL(file); }
+        texInput.value = '';
+      });
+    }
+    // Close modal when clicking overlay
+    ['new-file-modal', 'settings-modal', 'tex-modal'].forEach(id => {
+      const overlay = document.getElementById(id);
+      if (overlay) {
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('show'); });
+      }
+    });
+    // 绑定目录选择 input
+    const dcOnboard = document.getElementById('onboard-dc-input');
+    if (dcOnboard) dcOnboard.addEventListener('change', (e) => { handleDcFolderSelect(e.target.files, 'onboard-dc-display'); dcOnboard.value = ''; });
+    const dcSettings = document.getElementById('dc-folder-input');
+    if (dcSettings) {
+      // 设置面板的 dc 目录选择改用新 handler（兼容旧 input）
+      const origHandler = dcSettings.onchange;
+      dcSettings.onchange = null;
+      dcSettings.addEventListener('change', (e) => { handleDcFolderSelect(e.target.files, 'dc-dir-display'); dcSettings.value = ''; });
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+// ============================================================
+//  Initialization
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  updateShowAllButton();
+  try {
+    const saved = localStorage.getItem('bloom_tex_expanded_dirs');
+    if (saved) texExpandedDirs = new Set(JSON.parse(saved));
+  } catch(e) {}
+  initApp();
+  // Ctrl+Z 撤销
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      e.preventDefault();
+      undo();
+    }
+    // Esc 关闭模态框
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+      hideContextMenu();
+    }
+  });
+});
+
+async function initApp() {
+  setSaveStatus('none');
+  // 从后端恢复 DragonCore 目录
+  try {
+    const resp = await fetch('/api/dc-dir');
+    const data = await resp.json();
+    if (data.dir) {
+      dragonCoreDir = data.dir;
+      localStorage.setItem('tuolingbloom_dc_dir', dragonCoreDir);
+    }
+  } catch (e) { /* 忽略 */ }
+  // 从 IndexedDB 恢复贴图 blob 缓存
+  try {
+    const blobs = await texIDBLoadAll();
+    const keys = Object.keys(blobs);
+    if (keys.length > 0) {
+      textureBlobCache = [];
+      textureListCache = [];
+      keys.forEach(path => {
+        textureBlobCache.push({ path, url: URL.createObjectURL(blobs[path]) });
+        textureListCache.push(path);
+      });
+    }
+  } catch (e) { /* 忽略 */ }
+  // 首次引导：只需设置 DragonCore 目录
+  if (!dragonCoreDir) {
+    if (dragonCoreDir) document.getElementById('onboard-dc-display').textContent = dragonCoreDir;
+    checkOnboardingComplete();
+    document.getElementById('onboarding-modal').style.display = 'flex';
+    await fetchFiles();
+    return;
+  }
+  // 加载文件树
+  await fetchFiles();
+  // 自动加载第一个文件，方便预览
+  if (STATE.files.length > 0) {
+    // 默认尝试加载 config.yml 或第一个文件
+    const configFile = STATE.files.find(f => f.path === 'config.yml' || f.path.endsWith('/config.yml'));
+    const targetFile = configFile || STATE.files[0];
+    if (targetFile) await loadFile(targetFile.path);
+  } else {
+    showToast('暂无文件，点击「⇩ 同步」或「+ 新建」', 'info');
+  }
+}
+</script>
+</body>
+</html>

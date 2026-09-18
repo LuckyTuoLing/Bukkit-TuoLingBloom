@@ -1,0 +1,12 @@
+setting:
+  1:
+    delay: 0
+    texture:
+      translate-x: 0
+      translate-y: 2.6
+      translate-z: 0
+      rotate-x: 0
+      rotate-y: 0
+      rotate-z: 0
+      path: ""
+    animations: {}

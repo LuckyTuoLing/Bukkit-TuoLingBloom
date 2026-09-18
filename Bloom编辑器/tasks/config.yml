@@ -1,0 +1,156 @@
+#管理员无冷却
+op-not-cooldown: true
+#魂环贴图确定,根据lore或name确定贴图
+identify-texture:
+  十年魂环:
+    # check提供两种引擎:
+    # 1: check-lore: 检测物品的lore是否包含这行lore
+    # 2: check-name: 检测物品的名字是否包含这行lore
+    # 3: 如果check-lore和 check-name同时写了,那么就都检测,两方都包含才能识别成功
+    # 4: 如果check-lore 和 check-name 都没写,那就不检测,直接获取path
+    check-lore: "十年魂环"
+    path: "hh/h1.png"
+  百年魂环:
+    check-lore: "百年魂环"
+    path: "hh/h2.png"
+  神环:
+    check-lore: "神环"
+    path: "sh.png"
+  大笑:
+    path: "大笑.png"
+
+
+#模型确定
+identify-model:
+  罗刹神:
+    #同样支持check-lore 和 check-name
+    check-name: "神祁:罗刹神" #检测物品名是否包含此名
+    mm-name: "罗刹神"  #这里的name是MythicMob里面mob的配置名
+  罗刹神1:
+    #同样支持check-lore 和 check-name
+    check-lore: "mmm" #检测物品名是否包含此名
+    mm-name: "绽放模型_地穴魔蛛"  #这里的name是MythicMob里面mob的配置名	
+
+#绽放预设配置
+#在我们使用bloom bloom [bloom-preset]命令的时候
+# 比如 bloom bloom 主手1
+#这里[主手1]就是我们 [bloom-preset] 要填写的东西
+# 给了5种模式:
+# 1: main-hand(系统默认无需额外配置) --> 检测主手,玩家绽放时手持的物品,value不需要填写,系统自带,无需额外配置
+# 2: off-hand(系统默认无需额外配置) --> 检测副手,玩家副手上的物品,value不需要填写,系统自带,无需额外配置
+# 3: dragon-slot --> 检测指定的龙核槽位,支持多个自定义槽位,检测槽位物品绽放魂环,value栏填写槽位名
+# 4: inventory --> 检测背包和物品栏指定槽位,支持多个自定义槽位,检测槽位物品绽放魂环,value栏填写槽位索引号
+# 5: direct-bloom --> 直接绽放配置里的动画,value填写identify-texture或identify-model下的贴图或模型名字
+# 其余参数:
+# view: --> 必须配置,配置 model文件夹或 texture文件夹内的里面的文件名,用来选择动画
+# group: --> 非必要配置, 设置每个人的绽放组,同组之间冷却相同,同组之间,不能同时绽放,比如主手1和主手2在同一魂环组,那么我绽放完主手1后就不能绽放主手2
+# 如果是给魂兽绽放的,那就不设置组,因为如果设置同组,会导致魂兽1绽放完魂兽2无法绽放
+# duration --> 设置动画持续时间,到时间自动删除,单位秒
+#总结一下:
+# 前四种模式都是通过指定的物品以此来获取应该播放哪个动画,动画贴图应该是什么
+# 而第五种的模式不需要物品就能绽放动画,value填写identify表里的名字即可
+
+# 子索引不允许重复,比如武器绽放里面的不允许和表情包里面的索引名重复
+#格式要求:
+# ****:
+#    **:
+#       mode: ""
+#       view: ""
+#
+#
+#或者
+# ****:
+#    ****:
+#        ****:
+#            ****:
+#               mode: ""
+#               view: ""
+#无限嵌套索引，最终获取最里层的preset
+#但是不允许直接
+#    **:
+#       mode: ""
+#       view: ""
+#必须设置头部索引
+preset:
+  武器绽放:
+    主手1:
+      mode: "main-hand"
+      view: "贴图-底部"
+      group: "魂环组"
+      duration: 60
+    主手2:
+      mode: "main-hand"
+      view: "贴图-花式绽放"
+      group: "魂环组"
+      duration: 60
+    副手:
+      mode: "off-hand"
+      view: "贴图-背部"
+      group: "魂环组"
+      duration: 60
+    魂环槽:
+      value: "十年槽,百年槽,千年槽" #英文逗号分割
+      mode: "dragon-slot"
+      view: "贴图-底部"
+      group: "魂环组"
+      duration: 60
+    物品栏第一格:
+      value: "0"
+      mode: "inventory"
+      view: "贴图-底部"
+      group: "魂环组"
+      duration: 60
+    所有物品栏:
+      value: "36,37,38,39,40,41,42,43,44" #英文逗号分割
+      mode: "inventory"
+      view: "贴图-底部"
+      group: "魂环组"
+      duration: 60
+  武魂真身:
+    神祁槽:
+      mode: "main-hand"
+      view: "模型-神祁-背部" #注意: 如果view是模型,那么value只能填写一个参数!
+      group: "真身组"
+      duration: 60
+  表情包:
+    大笑:
+      value: "大笑"
+      mode: "direct-bloom"
+      view: "贴图-表情包"
+      group: "表情包组"
+      duration: 60
+  #无组
+  魂兽绽放:
+    十年魂兽:
+      value: "十年魂环"
+      mode: "direct-bloom"
+      view: "贴图-底部"
+      duration: 60
+    神祁槽1:
+      value: "罗刹神1"
+      mode: "direct-bloom"
+      view: "模型-神祁-背部" #注意: 如果view是模型,那么value只能填写一个参数!
+      group: "真身组"
+      duration: 60
+  世界贴图:
+    冰雪女王:
+      value: "十年魂环"
+      mode: "direct-bloom"
+      view: "贴图-世界贴图"
+      duration: -1 #一直存在
+
+
+
+  # 动画组设置,功能是使主手1和主手2公用一个冷却组和绽放组
+  # 也就是说主手1绽放过进入冷却,此时不能绽放主手2
+  # 而且主手1绽放中不能绽放主手2,需要取消主手1的绽放
+  # 如何取消？
+  # 方法1,如果正在绽放主手1,重新绽放一次自动检测状态并且取消
+  # 方法2: 输入命令 bloom remove [bloom-preset](主手1)即可
+bloom-group:
+  魂环组:
+    cooldown: 30
+  真身组:
+    cooldown: 30
+  表情包组:
+    cooldown: 15

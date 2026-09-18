@@ -1,0 +1,18 @@
+setting:
+  1:
+    delay: 0 #0秒后播放第一个
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: 0
+      rotate-z: 0
+    animations:
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false

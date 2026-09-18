@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文档 · TuoLingBloom</title>
+<style>
+/* ============================================================
+   TuoLingBloom 文档站样式
+   风格：水墨极简（宣纸米白底 + 墨黑主色 + 淡墨细边框 + 朱砂/玄金点缀）
+   ============================================================ */
+:root {
+    --ink: #1a1a1a;
+    --ink-light: #cccccc;
+    --ink-pale: #f5f5f0;
+    --ink-mid: #555555;
+    --ink-soft: #888888;
+    --text-dark: #111111;
+    --text-light: #666666;
+    --card-bg: #fdfdfb;
+    --paper: #f5f5f0;
+    --danger: #a03030;
+    --seal: #b03a2e;
+    --ok: #3f9d4e;
+    --mention: #2f6fb0;
+    --gold: #b0811a;
+    --gold-light: #d9b64e;
+    --purple: #8e5fd0;
+    --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.12);
+    --body-bg: linear-gradient(160deg, #f8f8f3 0%, #f2f2ed 35%, #ebebe6 65%, #e2e2dc 100%);
+    --font-sans: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    --font-kai: 'STKaiti', 'KaiTi', '楷体', Georgia, serif;
+    --font-mono: Consolas, 'Courier New', monospace;
+    --rail-w: 68px;
+    --toc-w: 250px;
+    --doc-max: 880px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    font-family: var(--font-sans);
+    background: var(--body-bg);
+    color: var(--text-dark);
+    font-size: 14px;
+    line-height: 1.7;
+}
+a { color: var(--mention); text-decoration: none; }
+a:hover { text-decoration: underline; }
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-thumb { background: #c8c8c0; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
+::-webkit-scrollbar-track { background: transparent; }
+.app-layout { display: flex; min-height: 100vh; }
+.nav-rail {
+    width: var(--rail-w);
+    background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 0;
+    gap: 6px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+.nav-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f5f5f0, #cccccc);
+    color: #1a1a1a;
+    font-family: var(--font-kai);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 40px;
+    text-align: center;
+    box-shadow: 0 0 0 2px rgba(245, 245, 240, 0.25);
+    margin-bottom: 10px;
+}
+.nav-icon {
+    width: 46px;
+    height: 46px;
+    border: none;
+    background: none;
+    border-radius: 10px;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.nav-icon:hover { background: rgba(255, 255, 255, 0.12); color: #fff; text-decoration: none; }
+.nav-icon.active { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.nav-sep { width: 26px; height: 1px; background: rgba(255, 255, 255, 0.18); margin: 8px 0; }
+.nav-foot {
+    margin-top: auto;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    writing-mode: vertical-rl;
+    letter-spacing: 2px;
+    padding-bottom: 6px;
+}
+.toc-panel {
+    width: var(--toc-w);
+    background: var(--card-bg);
+    border-right: 1px solid var(--ink-light);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 24px;
+}
+.toc-header {
+    padding: 18px 16px 12px;
+    font-family: var(--font-kai);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    border-bottom: 1px dashed var(--ink-light);
+    margin-bottom: 8px;
+}
+.toc-group {
+    padding: 12px 16px 4px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 1px;
+}
+.toc-item {
+    display: block;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--text-light);
+    border-left: 3px solid transparent;
+    transition: all 0.15s ease;
+}
+.toc-item:hover { color: var(--ink); background: var(--ink-pale); text-decoration: none; }
+.toc-item.active {
+    color: var(--ink);
+    font-weight: 600;
+    border-left-color: var(--ink);
+    background: linear-gradient(90deg, rgba(26, 26, 26, 0.06), transparent);
+}
+.doc-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.doc-inner { max-width: var(--doc-max); width: 100%; padding: 32px 44px 80px; }
+.doc-title {
+    font-family: var(--font-kai);
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--ink);
+    line-height: 1.35;
+}
+.doc-sub { margin-top: 10px; font-size: 14px; color: var(--text-light); }
+.doc-meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+h2 {
+    font-family: var(--font-kai);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 44px 0 14px;
+    padding-left: 10px;
+    border-left: 5px solid var(--ink);
+    scroll-margin-top: 20px;
+}
+h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 26px 0 10px;
+    scroll-margin-top: 20px;
+}
+h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-mid);
+    margin: 18px 0 8px;
+}
+p { margin: 10px 0; }
+ul, ol { margin: 10px 0 10px 22px; }
+li { margin: 5px 0; }
+strong { font-weight: 600; color: var(--ink); }
+hr { border: none; border-top: 1px dashed var(--ink-light); margin: 28px 0; }
+code {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    background: rgba(26, 26, 26, 0.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--ink);
+}
+.code-block { position: relative; margin: 14px 0; }
+.code-block pre {
+    background: #2b2b2b;
+    color: #e8e2d3;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #8a6d3b;
+    overflow-x: auto;
+    white-space: pre;
+}
+.code-block pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.code-block .code-lang {
+    position: absolute;
+    top: 8px;
+    right: 58px;
+    font-size: 10px;
+    color: rgba(232, 226, 211, 0.45);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.copy-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    border: 1px solid rgba(232, 226, 211, 0.28);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(232, 226, 211, 0.75);
+    font-size: 11px;
+    font-family: var(--font-sans);
+    padding: 2px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.copy-btn:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.copy-btn.done { color: #9ed3a5; border-color: rgba(158, 211, 165, 0.55); }
+.tbl-wrap { border: 1px solid var(--ink-light); border-radius: 8px; overflow-x: auto; margin: 14px 0; }
+table { border-collapse: collapse; width: 100%; background: #fbf8f0; font-size: 12.5px; }
+th {
+    background: rgba(26, 26, 26, 0.08);
+    color: var(--ink);
+    font-weight: 600;
+    padding: 8px 12px;
+    border: 1px solid var(--ink-light);
+    text-align: left;
+    white-space: nowrap;
+}
+td { padding: 7px 12px; border: 1px solid var(--ink-light); color: var(--ink-mid); vertical-align: top; }
+tbody tr:hover { background: rgba(180, 140, 80, 0.06); }
+.note {
+    background: #fbf8f0;
+    border: 1px solid var(--ink-light);
+    border-left: 5px solid var(--ink);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: var(--ink-mid);
+}
+.note .note-h { font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.note.warn { border-left-color: var(--seal); background: rgba(176, 58, 46, 0.05); }
+.note.warn .note-h { color: var(--seal); }
+.note.tip { border-left-color: var(--ok); background: rgba(63, 157, 78, 0.05); }
+.note.tip .note-h { color: var(--ok); }
+.badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--ink-light);
+    color: var(--ink-mid);
+    background: var(--ink-pale);
+    white-space: nowrap;
+}
+.badge.gold { color: var(--gold); border-color: var(--gold-light); background: rgba(217, 182, 78, 0.16); }
+.badge.ok { color: var(--ok); border-color: #7fbf7f; background: rgba(63, 157, 78, 0.12); }
+.badge.danger { color: var(--seal); border-color: rgba(176, 58, 46, 0.4); background: rgba(176, 58, 46, 0.1); }
+.badge.blue { color: var(--mention); border-color: #9dbfe0; background: rgba(47, 111, 176, 0.1); }
+.badge.purple { color: var(--purple); border-color: #c3a8e8; background: rgba(142, 95, 208, 0.12); }
+.path {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink);
+    background: var(--ink-pale);
+    border: 1px solid var(--ink-light);
+    border-radius: 4px;
+    padding: 1px 6px;
+}
+.steps { margin: 16px 0; counter-reset: step; }
+.step {
+    position: relative;
+    padding: 12px 16px 12px 52px;
+    background: var(--card-bg);
+    border: 1px solid var(--ink-light);
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+.step::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 15px;
+    top: 14px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a1a1a, #4a4a4a);
+    color: #f5f5f0;
+    font-size: 11px;
+    line-height: 22px;
+    text-align: center;
+    font-weight: 600;
+}
+.step b { display: block; color: var(--ink); font-size: 14px; margin-bottom: 2px; }
+.step span { font-size: 13px; color: var(--text-light); }
+.chapter-divider {
+    margin: 56px 0 20px;
+    padding: 20px 22px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #3a3a3a 100%);
+    color: #f5f5f0;
+    font-family: var(--font-kai);
+    font-size: 26px;
+    letter-spacing: 3px;
+    box-shadow: var(--shadow-soft);
+}
+.chapter-divider small { display: block; font-family: var(--font-sans); font-size: 12px; color: rgba(245,245,240,0.55); letter-spacing: 1px; margin-top: 4px; }
+.doc-footer {
+    margin-top: 60px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--ink-light);
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+@media (max-width: 900px) {
+    .toc-panel { display: none; }
+    .doc-inner { padding: 24px 20px 60px; }
+}
+@media (max-width: 560px) {
+    .nav-rail { width: 56px; }
+    .nav-icon { width: 40px; height: 40px; font-size: 18px; }
+    .doc-title { font-size: 26px; }
+    h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+    <nav class="nav-rail">
+        <div class="nav-logo">绽</div>
+        <a class="nav-icon" href="#top" title="顶部">🏠</a>
+        <a class="nav-icon active" href="#user" title="用户文档">📖</a>
+        <a class="nav-icon" href="#dev" title="开发者文档">🧩</a>
+        <div class="nav-sep"></div>
+        <a class="nav-icon" href="#faq" title="常见问题">🔍</a>
+        <div class="nav-foot">Bloom</div>
+    </nav>
+
+    <aside class="toc-panel">
+        <div class="toc-header">文档目录</div>
+
+        <div class="toc-group">用户文档</div>
+        <a class="toc-item" href="#user">用户文档 · 概览</a>
+        <a class="toc-item" href="#install">安装与前置</a>
+        <a class="toc-item" href="#config">配置文件总览</a>
+        <a class="toc-item" href="#preset">config.yml · 预设</a>
+        <a class="toc-item" href="#identify">identify · 识别系统</a>
+        <a class="toc-item" href="#group">bloom-group · 冷却组</a>
+        <a class="toc-item" href="#texture">贴图配置</a>
+        <a class="toc-item" href="#model">模型配置</a>
+        <a class="toc-item" href="#worldtexture">世界贴图</a>
+        <a class="toc-item" href="#message">消息配置</a>
+        <a class="toc-item" href="#commands">命令与权限</a>
+        <a class="toc-item" href="#gameplay">绽放玩法 / 模式</a>
+        <a class="toc-item" href="#mob">怪物绽放</a>
+        <a class="toc-item" href="#papi">PlaceholderAPI</a>
+        <a class="toc-item" href="#versions">跨版本说明</a>
+        <a class="toc-item" href="#editor">可视化编辑器</a>
+        <a class="toc-item" href="#faq">常见问题</a>
+
+        <div class="toc-group">开发者文档</div>
+        <a class="toc-item" href="#dev">开发者文档 · 概览</a>
+        <a class="toc-item" href="#dev-structure">项目结构</a>
+        <a class="toc-item" href="#dev-modules">模块职责</a>
+        <a class="toc-item" href="#dev-startup">启动流程</a>
+        <a class="toc-item" href="#dev-core">Actor + 路由策略 + Service</a>
+        <a class="toc-item" href="#dev-actor">Actor 双角色</a>
+        <a class="toc-item" href="#dev-router">Bloom 路由 + 策略</a>
+        <a class="toc-item" href="#dev-pipeline">三阶段业务管线</a>
+        <a class="toc-item" href="#dev-cache">缓存设计</a>
+        <a class="toc-item" href="#dev-config">配置层</a>
+        <a class="toc-item" href="#dev-presetutils">PresetUtils</a>
+        <a class="toc-item" href="#dev-softdep">软依赖隔离</a>
+        <a class="toc-item" href="#dev-chain">绽放调用链</a>
+        <a class="toc-item" href="#dev-events">事件</a>
+        <a class="toc-item" href="#dev-placeholder">占位符扩展</a>
+        <a class="toc-item" href="#dev-extend">扩展指南</a>
+        <a class="toc-item" href="#dev-build">构建与部署</a>
+        <a class="toc-item" href="#dev-conventions">编码约定</a>
+    </aside>
+
+    <main class="doc-panel">
+        <div class="doc-inner">
+
+            <span id="top"></span>
+            <div class="doc-title">TuoLingBloom · 文档</div>
+            <p class="doc-sub">用户文档 + 开发者文档合集。拓灵绽放（TuoLingBloom）是基于 DragonCore 的多功能动画绽放插件，支持魂环、贴图、模型、表情包、称号等多种效果，还能给 MythicMobs 怪物自动套魂环。</p>
+            <div class="doc-meta">
+                <span class="badge gold">1.0</span>
+                <span class="badge ok">Java 8+</span>
+                <span class="badge blue">Spigot / Paper</span>
+                <span class="badge purple">DragonCore</span>
+            </div>
+
+            <!-- =========================================================
+                 ==================== 用户文档 ====================
+                 ========================================================= -->
+            <div class="chapter-divider" id="user">
+                用户文档
+                <small>安装、配置、命令、玩法与编辑器说明 —— 读完这一节，你就能把 TuoLingBloom 调到想要的样子。</small>
+            </div>
+
+            <h2 id="install">安装与前置</h2>
+
+            <h3>环境要求</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>项目</th><th>要求</th></tr></thead>
+                    <tbody>
+                    <tr><td>服务端</td><td>Spigot / Paper 及其分支</td></tr>
+                    <tr><td>Java</td><td>Java 8 及以上（与服务端版本要求一致即可）</td></tr>
+                    <tr><td>硬依赖</td><td><code>DragonCore ≥ 2.6.1</code>：提供世界贴图、客户端实体模型挂载等核心 API</td></tr>
+                    <tr><td>硬依赖</td><td><code>TuoLingCore ≥ 1.0</code>：拓灵核心框架，提供命令注册、通用管理器基座</td></tr>
+                    <tr><td>软依赖</td><td><code>MythicMobs</code>：模型路线生成挂载实体（不装仅 model 路线不可用）</td></tr>
+                    <tr><td>软依赖</td><td><code>PlaceholderAPI</code>：冷却查询变量（不装仅变量失效）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>安装步骤</h3>
+            <div class="steps">
+                <div class="step">
+                    <b>放入依赖与本体</b>
+                    <span>将 <code>TuoLingBloom-1.0.jar</code> 放入服务端 <code>plugins/</code>，并确保 <code>DragonCore.jar</code> 和 <code>TuoLingCore.jar</code> 也在其中。</span>
+                </div>
+                <div class="step">
+                    <b>完全重启服务器</b>
+                    <span>插件会自动生成默认配置文件（config.yml / message.yml / world-texture.yml 等）。</span>
+                </div>
+                <div class="step">
+                    <b>编辑配置</b>
+                    <span>编辑 <code>plugins/TuoLingBloom/config.yml</code> 配置预设，再编辑 <code>texture/</code> 或 <code>model/</code> 下的动画配置。</span>
+                </div>
+                <div class="step">
+                    <b>重载生效</b>
+                    <span>游戏内执行 <code>/bloom reload</code>（或 <code>/tuolingbloom reload</code>）重载配置。</span>
+                </div>
+            </div>
+
+            <div class="note warn">
+                <div class="note-h">首次启动 & 整服重启</div>
+                默认配置文件只有<strong>首次启动</strong>才会生成，请整服重启而不是热重载。替换 jar 后要重启而不是依赖 <code>/reload</code>，否则可能仍加载旧类；排查问题时先核对报错日志行号与当前源码是否一致。
+            </div>
+
+            <h3>控制台提示</h3>
+            <p>插件启用时会在控制台打印横幅，便于确认版本和配置是否加载成功；关闭时会清空所有绽放状态并打印关闭横幅。</p>
+
+            <h2 id="config">配置文件总览</h2>
+            <p>配置都在 <span class="path">plugins/TuoLingBloom/</span> 下：</p>
+            <div class="code-block">
+                <span class="code-lang">tree</span>
+                <pre><code>plugins/TuoLingBloom/
+├── config.yml             # 预设 + 识别系统 + 冷却组 + 开关
+├── message.yml            # 玩家 / 控制台 / 帮助消息
+├── world-texture.yml      # 固定坐标的世界贴图
+├── texture/               # 贴图动画配置（分类目录下 *.yml）
+│   └── &lt;分类&gt;/&lt;动画名&gt;.yml
+└── model/                 # 模型动画配置（*.yml）
+    └── &lt;模型名&gt;.yml</code></pre>
+            </div>
+            <p>改完配置文件执行 <code>/bloom reload</code>（需要 OP）或重启生效。</p>
+
+            <h2 id="preset">config.yml — 预设配置</h2>
+            <p>这是插件的核心入口，定义了所有可绽放的预设组。基本结构如下：</p>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>preset:
+  &lt;分类&gt;:                # 头部索引，必须设置
+    &lt;预设名&gt;:              # 最里层即"预设名"，使用时 bloom run &lt;预设名&gt;
+      mode: "&lt;策略模式&gt;"    # 必填，5 种策略之一
+      view: "&lt;动画名&gt;"      # 必填，texture/ 或 model/ 下的文件名（不含后缀）
+      value: "&lt;参数&gt;"       # 选填，依模式而定，多个用英文逗号分隔
+      group: "&lt;组名&gt;"       # 选填，同组冲突 / 冷却共享
+      duration: &lt;秒数&gt;     # 选填，-1 为永久</code></pre>
+            </div>
+
+            <h3>5 种策略模式</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>模式</th><th>说明</th><th>value 填写</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>main-hand</code></td><td>检测玩家主手物品</td><td>无需填写</td></tr>
+                    <tr><td><code>off-hand</code></td><td>检测玩家副手物品</td><td>无需填写</td></tr>
+                    <tr><td><code>dragon-slot</code></td><td>检测龙核自定义槽位</td><td>槽位名，多个用英文逗号分隔</td></tr>
+                    <tr><td><code>inventory</code></td><td>检测背包指定槽位</td><td>槽位索引号，多个用英文逗号分隔</td></tr>
+                    <tr><td><code>direct-bloom</code></td><td>直接绽放，无需物品</td><td><code>identify-texture</code> / <code>identify-model</code> 表里的名字</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>前四种都是「通过指定物品 → 获取该播放哪个动画、用哪张贴图」；第五种不需要物品就能绽放，<code>value</code> 直接填 <code>identify</code> 表里的名字。</p>
+
+            <h3>参数说明</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>mode</code></td><td>String</td><td>必填</td><td>上面 5 种策略之一</td></tr>
+                    <tr><td><code>view</code></td><td>String</td><td>必填</td><td><code>texture/</code> 或 <code>model/</code> 目录下的文件名（不含后缀）</td></tr>
+                    <tr><td><code>value</code></td><td>String</td><td>选填</td><td>依模式而定，多个用英文逗号分隔</td></tr>
+                    <tr><td><code>group</code></td><td>String</td><td>选填</td><td>所属组名，同组冲突 / 冷却共享</td></tr>
+                    <tr><td><code>duration</code></td><td>Integer</td><td>选填</td><td>持续时间（秒），<code>-1</code> 为永久</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="note">
+                <div class="note-h">预设嵌套规则</div>
+                预设支持无限嵌套，最终获取最里层的 preset。<strong>子索引（预设名）全局不允许重复</strong>，例如「武器绽放」里不允许出现和「表情包」里一样的索引名。也不能跳过头部索引直接写 <code>mode</code>。
+            </div>
+
+            <p>示例——一个带分类、组、持续时间的预设：</p>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>preset:
+  武器绽放:
+    主手:
+      mode: "main-hand"
+      view: "贴图-底部"
+      group: "魂环组"
+      duration: 60</code></pre>
+            </div>
+            <p>使用时执行 <code>/bloom run 主手</code> 即可。</p>
+
+            <h2 id="identify">identify — 识别系统</h2>
+            <p>插件通过物品识别来确定绽放用的贴图路径或模型名。</p>
+
+            <h3>identify-texture — 贴图识别</h3>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>identify-texture:
+  十年魂环:
+    check-lore: "十年魂环"     # 检测物品 lore 是否包含此行
+    path: "bloom/魂环/h1.png"
+  大笑:
+    path: "bloom/表情包/大笑.png" # 无 check，直接使用</code></pre>
+            </div>
+            <ul>
+                <li><code>check-lore</code>：检测物品 lore 是否包含此行</li>
+                <li><code>check-name</code>：检测物品名字是否包含此行</li>
+                <li>两者都写，则都匹配才能识别成功</li>
+                <li>都不写，则不检测，直接使用该 <code>path</code></li>
+            </ul>
+
+            <h3>identify-model — 模型识别</h3>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>identify-model:
+  罗刹神:
+    check-name: "神祁:罗刹神"
+    mm-name: "罗刹神"          # MythicMobs 配置里的 mob 名</code></pre>
+            </div>
+            <p>同样支持 <code>check-lore</code> 和 <code>check-name</code>。<code>mm-name</code> 填写 MythicMobs 配置中的 mob 名。</p>
+
+            <h2 id="group">bloom-group — 冷却组</h2>
+            <p>定义预设组的冷却时间和冲突关系：</p>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>bloom-group:
+  魂环组:
+    cooldown: 30
+  真身组:
+    cooldown: 30
+  表情包组:
+    cooldown: 15</code></pre>
+            </div>
+            <p>同组预设共享冷却时间；同时绽放中时不能绽放同组其他预设。</p>
+
+            <h3>op-not-cooldown</h3>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>op-not-cooldown: true</code></pre>
+            </div>
+            <p>设为 <code>true</code> 时，OP 玩家不受冷却限制。</p>
+
+            <h2 id="texture">贴图配置（texture/*.yml）</h2>
+            <p>贴图动画配置文件放在 <span class="path">plugins/TuoLingBloom/texture/</span> 目录下，支持按分类建子文件夹。一个文件里可以有多个层级（<code>setting.1/2/3...</code>），渲染时按 <code>delay</code> 依次播放。</p>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>setting:
+  &lt;层级编号&gt;:
+    delay: 0               # 延迟播放（秒）
+    texture:
+      translate-x: 0        # X 轴偏移
+      translate-y: 2.35     # Y 轴偏移
+      translate-z: 0.0      # Z 轴偏移
+      rotate-x: 90          # X 轴旋转
+      rotate-y: -60         # Y 轴旋转
+      rotate-z: 0           # Z 轴旋转
+      path: "hh/h1.png"     # 默认贴图（识别不到时使用；path 也可由运行时从 identify 表动态填入）
+      follow-player-eyes: false  # 贴图是否始终面向观察者视角
+    animations:
+      translate-animation:  # 位移动画
+        direction: 'z'
+        delay: 0
+        distance: 2.30
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:      # 缩放动画
+        delay: 0
+        from-scale: 10.3
+        to-scale: 1.5
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:     # 旋转动画
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1      # -1 为无限循环
+        fixed: false</code></pre>
+            </div>
+
+            <h3>参数说明</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>参数</th><th>类型</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>setting.&lt;编号&gt;.delay</code></td><td>Integer</td><td>该层延迟播放的秒数</td></tr>
+                    <tr><td><code>texture.translate-x/y/z</code></td><td>Double</td><td>贴图位移坐标</td></tr>
+                    <tr><td><code>texture.rotate-x/y/z</code></td><td>Double</td><td>贴图旋转角度</td></tr>
+                    <tr><td><code>texture.path</code></td><td>String</td><td>默认贴图路径（运行时可能被 identify 结果覆盖）</td></tr>
+                    <tr><td><code>texture.follow-player-eyes</code></td><td>Boolean</td><td>贴图是否始终面向观察者视角</td></tr>
+                    <tr><td><code>animations.translate-animation</code></td><td>Object</td><td>位移动画配置</td></tr>
+                    <tr><td><code>animations.scale-animation</code></td><td>Object</td><td>缩放动画配置</td></tr>
+                    <tr><td><code>animations.rotate-animation</code></td><td>Object</td><td>旋转动画配置</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>动画参数</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>参数</th><th>类型</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>direction</code></td><td>String</td><td>动画方向（x/y/z）</td></tr>
+                    <tr><td><code>delay</code></td><td>Integer</td><td>动画延迟（毫秒）</td></tr>
+                    <tr><td><code>duration</code></td><td>Integer</td><td>动画持续时间（毫秒）</td></tr>
+                    <tr><td><code>cycle-count</code></td><td>Integer</td><td>循环次数，<code>-1</code> 为无限循环</td></tr>
+                    <tr><td><code>fixed</code></td><td>Boolean</td><td>是否固定（不受玩家转向影响）</td></tr>
+                    <tr><td><code>distance</code></td><td>Double</td><td>位移距离（translate-animation）</td></tr>
+                    <tr><td><code>from-scale</code></td><td>Double</td><td>起始缩放（scale-animation）</td></tr>
+                    <tr><td><code>to-scale</code></td><td>Double</td><td>结束缩放（scale-animation）</td></tr>
+                    <tr><td><code>resetTime</code></td><td>Integer</td><td>缩放复位时间（毫秒）</td></tr>
+                    <tr><td><code>angle</code></td><td>Double</td><td>旋转角度（rotate-animation）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 id="model">模型配置（model/*.yml）</h2>
+            <p>模型动画配置文件放在 <span class="path">plugins/TuoLingBloom/model/</span> 目录下，用于挂载三维模型（如武魂真身）。</p>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>setting:
+  &lt;层级编号&gt;:
+    delay: 0
+    location:          # 模型相对于实体的位置偏移
+      x: 0
+      y: 0
+      z: 3</code></pre>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>参数</th><th>类型</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>setting.&lt;编号&gt;.delay</code></td><td>Integer</td><td>延迟生成（秒）</td></tr>
+                    <tr><td><code>location.x/y/z</code></td><td>Double</td><td>模型相对于实体的位置偏移</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="note warn">
+                <div class="note-h">模型路线限制</div>
+                模型路线依赖 MythicMobs，且 <code>view</code> 指向模型时 <code>value</code> <strong>只能填写一个参数</strong>（配置里多余的值会被忽略）。
+            </div>
+
+            <h2 id="worldtexture">世界贴图（world-texture.yml）</h2>
+            <p>配置固定坐标的世界贴图，贴图显示在世界指定位置，不绑定实体。</p>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>世界贴图1:
+  world: "world"
+  location:
+    x: 100
+    y: 100
+    z: 100
+  preset: "冰雪女王"    # 需在 config.yml 中定义的预设名</code></pre>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>参数</th><th>类型</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>world</code></td><td>String</td><td>贴图所在世界</td></tr>
+                    <tr><td><code>location.x/y/z</code></td><td>Double</td><td>贴图坐标</td></tr>
+                    <tr><td><code>preset</code></td><td>String</td><td>对应的预设名（需在 config.yml 中定义）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="note">
+                <div class="note-h">世界贴图的 duration</div>
+                世界贴图的 preset 对应 <code>duration</code> 建议设为 <code>-1</code>（永久存在），这样玩家进出服时也会被自动补发渲染。世界贴图渲染由 <code>ReissueWorldTextureService</code> 管理。
+            </div>
+
+            <h2 id="message">消息配置（message.yml）</h2>
+            <p>所有玩家消息、控制台日志和帮助信息均可自定义。分为三组：<code>player</code>（玩家收到）、<code>console</code>（控制台输出）、<code>help</code>（帮助命令显示）。</p>
+
+            <h3>颜色写法</h3>
+            <p>文案里用 <code>§</code> 加颜色代码，例如 <code>§f</code> 白、<code>§e</code> 黄、<code>§c</code> 红、<code>§6</code> 金、<code>§a</code> 绿、<code>§b</code> 青、<code>§l</code> 加粗。插件会自动转换成游戏内颜色。</p>
+            <div class="note">
+                <div class="note-h">前缀与消息通道</div>
+                插件文案自带前缀（如 <code>§f[§c绽放§f]</code>），消息发送不经 SendMessageUtil，直连 Bukkit 通道。游戏内看前缀即可区分玩家消息与控制台后台日志。
+            </div>
+
+            <h3>消息占位符</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>占位符</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>%preset%</code></td><td>预设名</td></tr>
+                    <tr><td><code>%view%</code></td><td>动画名</td></tr>
+                    <tr><td><code>%entry%</code></td><td>世界贴图名</td></tr>
+                    <tr><td><code>%cooldown%</code></td><td>冷却剩余秒数</td></tr>
+                    <tr><td><code>%require%</code></td><td>需要的数量</td></tr>
+                    <tr><td><code>%actual%</code></td><td>实际的数量</td></tr>
+                    <tr><td><code>%value%</code></td><td>配置的 value 值</td></tr>
+                    <tr><td><code>%mode%</code></td><td>策略模式</td></tr>
+                    <tr><td><code>%type%</code></td><td>类型（texture/model）</td></tr>
+                    <tr><td><code>%index%</code></td><td>层级索引</td></tr>
+                    <tr><td><code>%name%</code></td><td>名称</td></tr>
+                    <tr><td><code>%key%</code></td><td>配置键</td></tr>
+                    <tr><td><code>%error%</code></td><td>错误信息</td></tr>
+                    <tr><td><code>%version%</code></td><td>版本号</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 id="commands">命令与权限</h2>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>命令</th><th>说明</th><th>权限</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>/bloom run &lt;预设名&gt;</code></td><td>绽放指定预设组</td><td><span class="badge ok">无需</span>，玩家可用</td></tr>
+                    <tr><td><code>/bloom remove &lt;预设名&gt;</code></td><td>取消指定预设绽放</td><td><span class="badge ok">无需</span>，玩家可用</td></tr>
+                    <tr><td><code>/bloom reload</code></td><td>重载全部配置</td><td>OP</td></tr>
+                    <tr><td><code>/bloom</code> · <code>/bloom help</code></td><td>显示帮助</td><td><span class="badge ok">无需</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <ul>
+                <li>主命令 <code>/bloom</code>，别名 <code>/tuolingbloom</code>，完全等价</li>
+                <li>无参数或参数不全时自动显示帮助</li>
+                <li><code>reload</code> 判定走 <code>sender.isOp()</code>；无权限时提示「你没有权限执行此操作」</li>
+                <li>控制台执行 <code>run</code> / <code>remove</code> 会被提示「该命令只能由玩家执行」</li>
+            </ul>
+
+            <h3>补充</h3>
+            <ul>
+                <li><strong>取消绽放</strong>：绽放中的预设再次执行 <code>/bloom run &lt;同预设&gt;</code> 即自动取消（重新执行时会先检测状态并取消）</li>
+                <li><strong>重载机制</strong>：<code>reload</code> 先统一取消清理所有正在绽放的实体（玩家 + 怪物）与全部世界贴图，再统一用新配置重新绽放，因此两侧状态始终一致</li>
+                <li><strong>Tab 补全</strong>：输入 <code>/bloom run </code> 后按 Tab 会补全当前配置里的预设名</li>
+            </ul>
+
+            <h2 id="gameplay">绽放玩法 / 模式说明</h2>
+
+            <h3>冲突与冷却规则</h3>
+            <ul>
+                <li><strong>同组冲突</strong>：同 <code>group</code> 的预设不能同时绽放。例如「魂环组」里已绽放「主手」，就不能再绽放「主手2」或同组其他预设（提示冲突）</li>
+                <li><strong>同组冷却</strong>：同 <code>group</code> 共享冷却时间，冷却中不能绽放（提示 <code>%cooldown%</code> 剩余秒数）</li>
+                <li><strong>无组预设</strong>：<code>group</code> 不给则该预设独立走完，彼此不冲突不共享冷却，适合魂兽/怪物（见下）</li>
+                <li><strong>怪物不走冷却</strong>：绽放入口只对 <code>Player</code> 做冷却判定，怪物（mob）一律放行</li>
+                <li><strong>OP 无视冷却</strong>：<code>op-not-cooldown: true</code> 时 OP 不受冷却限制</li>
+            </ul>
+
+            <h2 id="mob">怪物绽放（魂兽 / 怪物套魂环、套模型）</h2>
+            <p>插件自动给 MythicMobs 怪物套绽放效果：<strong>生成时自动绽放，死亡时自动清理</strong>，无需玩家操作。</p>
+            <p>配置分两步：</p>
+            <ol>
+                <li>在 <code>config.yml</code> 定义怪物用的预设（用 <code>direct-bloom</code> 模式、<code>value</code> 填 identify 名、<code>duration: -1</code>）</li>
+                <li>在 MythicMobs 的 mob 配置中添加 <code>TuoLingBloom</code> 列表</li>
+            </ol>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>preset:
+  魂兽绽放:
+    十年魂兽:
+      value: "十年魂环"
+      mode: "direct-bloom"
+      view: "贴图-底部"
+      duration: -1    # 永久存在，等待怪物死亡自动清理</code></pre>
+            </div>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code># MythicMobs 配置
+十年魂兽:
+  Type: ZOMBIE
+  Display: '&amp;a十年魂兽'
+  Options:
+    # ... 其他选项
+  TuoLingBloom:
+    - "十年魂兽"     # 填 config.yml 最里层的预设名（扁平名，不能用点号分隔路径）</code></pre>
+            </div>
+            <div class="note warn">
+                <div class="note-h">怪物预设两条铁律</div>
+                怪物预设<strong>不要设置 <code>group</code></strong>，否则同一只怪物上不同预设会冲突（同组互斥导致后面的无法绽放）。<br>
+                <code>TuoLingBloom</code> 列表里<strong>只能写扁平预设名</strong>，不要用 <code>魂兽绽放.十年魂兽</code> 这类点号嵌套路径，否则配置解析失败。
+            </div>
+            <p>给怪物挂载模型（如武魂真身）方式相同，<code>view</code> 指向 <code>model/*.yml</code> 即可：</p>
+            <div class="code-block">
+                <span class="code-lang">yaml</span>
+                <pre><code>preset:
+  魂兽绽放:
+    武魂魂兽:
+      value: "罗刹神"
+      mode: "direct-bloom"
+      view: "模型-神祁-背部"
+      duration: -1</code></pre>
+            </div>
+            <p>工作机制：怪物生成时插件监听 <code>MythicMobSpawnEvent</code>，读取 <code>TuoLingBloom</code> 列表逐一向怪物绽放；绽放贴图时附近所有玩家都会收到该怪物的贴图渲染包；怪物死亡时监听 <code>MythicMobDeathEvent</code>，自动取消所有绽放并清理所有玩家的客户端贴图。模型路线通过 MythicMobs API 生成挂载实体，2 tick 延迟后挂载模型。</p>
+
+            <h2 id="papi">PlaceholderAPI</h2>
+            <p>软依赖，未安装不影响使用。装了会自动注册本插件的占位符（identifier 为 <code>tuolingbloom</code>）。</p>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>变量</th><th>说明</th><th>示例</th></tr></thead>
+                    <tbody>
+                    <tr>
+                        <td><code>%tuolingbloom_cooldown_&lt;预设名&gt;%</code></td>
+                        <td>返回玩家该预设的冷却剩余秒数</td>
+                        <td><code>%tuolingbloom_cooldown_主手%</code></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>冷却为 <code>0</code> 表示无冷却或可绽放。控制台请求（无玩家）时返回 <code>null</code>，不会抛异常。</p>
+
+            <h2 id="versions">跨版本说明</h2>
+            <p>插件对贴图、模型、动画做了运行时适配，尽量按当前服务端能力选择实现。模型路线与怪物路线以软依赖方式隔离，未装 MythicMobs 时相关代码不会加载，不会因此报错。</p>
+            <div class="note">
+                <div class="note-h">进服补发延迟</div>
+                涉及 DragonCore 客户端实体加载的部分（如玩家进服补发）存在延迟，插件会自动延迟 40 tick（2 秒）补发，避免实体未加载完成导致贴图不显示。
+            </div>
+
+            <h2 id="editor">可视化编辑器</h2>
+            <p>插件附赠一个 <strong>3D 可视化配置编辑器</strong>，无需手写 YAML，所见即所得。前端基于 Three.js，后端是零依赖的 PowerShell <code>HttpListener</code> 服务。</p>
+
+            <h3>启动方式</h3>
+            <div class="steps">
+                <div class="step">
+                    <b>打开目录</b>
+                    <span>进入 <code>Bloom编辑器/</code> 目录。</span>
+                </div>
+                <div class="step">
+                    <b>启动后端</b>
+                    <span>双击 <code>start.bat</code> 启动后端服务（Windows 自带 PowerShell 即可）。</span>
+                </div>
+                <div class="step">
+                    <b>访问页面</b>
+                    <span>浏览器打开 <code>http://127.0.0.1:17965</code>（默认端口 17965）。</span>
+                </div>
+            </div>
+            <div class="note">
+                <div class="note-h">关于后端</div>
+                编辑器后端是 <code>server.ps1</code>，基于 Windows 自带 <code>System.Net.HttpListener</code>，无需安装任何额外依赖。Ctrl+C 可停止服务。
+            </div>
+
+            <h3>功能特性</h3>
+            <ul>
+                <li><strong>3D 实时预览</strong>：Three.js 渲染，直接预览魂环 / 贴图在玩家身上的最终效果；底部时间轴可播放 / 重置动画</li>
+                <li><strong>可视化拖拽</strong>：调整位置、旋转、缩放，参数实时同步到配置（左键拖=移动，Shift+左键拖=旋转 X/Y，Ctrl+左键拖=旋转 Z）</li>
+                <li><strong>双编辑模式</strong>：贴图 / 模型文件支持「可视化」与「编辑文件（原始 YAML）」一键切换；切换编辑模式时当前内容会在两种表示间互转</li>
+                <li><strong>文件管理</strong>：在左侧文件树中浏览、新建、重命名、复制、下载、删除所有配置文件；支持按分类建子文件夹</li>
+                <li><strong>自动保存</strong>：修改自动保存到本地 <code>tasks/</code> 目录，无需手动操作</li>
+                <li><strong>导出</strong>：<code>导出</code> 按钮可把当前文件导出为 YAML</li>
+            </ul>
+
+            <h3>新建文件</h3>
+            <ul>
+                <li>点「+ 新建」打开新建弹窗，类型只有两种：<code>贴图动画 (texture/*.yml)</code>、<code>模型配置 (model/*.yml)</code></li>
+                <li>文件名只需填<strong>纯文件名</strong>，无需输入目录和后缀（会自动补 <code>.yml</code>，可自动清理误输入的 <code>texture/</code>、<code>model/</code> 前缀）</li>
+                <li>新建文件会自动生成对应类型的默认内容（贴图或模型模板）</li>
+            </ul>
+
+            <h3>DragonCore 目录选择与预览贴图</h3>
+            <ul>
+                <li>首次使用需在 <code>⚙ 全局设置</code> 中<strong>手动选择客户端 DragonCore 贴图目录</strong>（含贴图 png 的目录），用于在编辑器中预览贴图。该路径会持久化到 <code>dc_dir.txt</code>，下次打开自动加载</li>
+                <li>「修改模式」下可从 DragonCore 目录浏览并<strong>套用贴图</strong>到对应魂环层。套用的贴图只用于 3D <strong>预览</strong>，不会写回 YAML 配置；刷新后仍能恢复显示</li>
+                <li>预览贴图映射持久化在 <code>preview_tex.json</code>（与配置分离），因此不会污染 <code>texture/*.yml</code> 的 <code>path</code> 字段</li>
+            </ul>
+
+            <h3>目录结构说明</h3>
+            <div class="code-block">
+                <span class="code-lang">tree</span>
+                <pre><code>Bloom编辑器/
+├── index.html           # 前端页面（Three.js 3D 编辑器）
+├── server.ps1           # 后端服务（PowerShell HttpListener）
+├── start.bat            # 启动脚本
+├── dc_dir.txt           # DragonCore 贴图目录（持久化）
+├── preview_tex.json     # 预览贴图映射（不写入配置）
+└── tasks/               # 配置文件目录（编辑器直接读写这里）
+    ├── config.yml
+    ├── message.yml
+    ├── world-texture.yml
+    ├── texture/
+    │   └── *.yml
+    └── model/
+        └── *.yml</code></pre>
+            </div>
+            <div class="note tip">
+                <div class="note-h">配置存于编辑器自身</div>
+                编辑器的配置直接存在自带的 <code>tasks/</code> 文件夹里，<strong>无需从服务端导入</strong>。编辑完成后把这些文件（<code>tasks/</code> 下的 config.yml、message.yml、world-texture.yml、texture/、model/）同步到服务端 <code>plugins/TuoLingBloom/</code> 即可生效。
+            </div>
+
+            <h2 id="faq">常见问题（FAQ）</h2>
+
+            <h3>绽放没反应，也没提示</h3>
+            <ul>
+                <li>确认 <code>view</code> 对应的文件在 <code>texture/</code> 或 <code>model/</code> 下真实存在，且书写的是文件名（不含后缀）</li>
+                <li>确认预设名（最里层索引）未被重复定义</li>
+                <li>确认触发「模式」依赖的条件满足：<code>main-hand</code>/<code>off-hand</code> 需要手持对应识别物品，<code>dragon-slot</code> 需要对应槽位有物品，<code>inventory</code> 需要指定槽位索引在物品栏范围内</li>
+                <li>如果同组冲突：先 <code>/bloom remove &lt;当前预设&gt;</code> 或换个不同 <code>group</code> 的预设</li>
+            </ul>
+
+            <h3>提示冲突 / 冷却</h3>
+            <ul>
+                <li><strong>冲突</strong>：同 <code>group</code> 的预设正在绽放中，无法再绽放同组其他预设。用 <code>/bloom remove</code> 取消当前预设，或给它配到不同组</li>
+                <li><strong>冷却</strong>：同组共享冷却，<code>%cooldown%</code> 显示剩余秒数。OP 想无视冷却可将 <code>op-not-cooldown</code> 改为 <code>true</code></li>
+            </ul>
+
+            <h3>怪物没套上魂环</h3>
+            <ul>
+                <li>确认预设 mode 是 <code>direct-bloom</code>、<code>group</code> <strong>不要设置</strong></li>
+                <li>确认 <code>TuoLingBloom</code> 列表里写的是<strong>扁平预设名</strong>（不用点号嵌套路径）</li>
+                <li>确认 <code>value</code> 在 <code>identify-texture</code> / <code>identify-model</code> 中能查到</li>
+            </ul>
+
+            <h3>模型路线不能用</h3>
+            <ul>
+                <li>没装 MythicMobs 时 model 路线不可用（软依赖，未装不会报错，只是该路线不工作）</li>
+                <li>填了模型 <code>view</code> 时 <code>value</code> 只能填<strong>一个</strong>参数</li>
+            </ul>
+
+            <h3>OP 一直没冷却，想限制怎么办</h3>
+            <p>把 <code>op-not-cooldown</code> 改为 <code>false</code>，OP 就和其他玩家一样受冷却限制。</p>
+
+            <h3>/bloom reload 报「没有权限」</h3>
+            <p>reload 只对 OP 开放（走 <code>isOp()</code>）。不是 OP 则无法重载，请用控制台或给临时 OP。</p>
+
+            <h3>改了配置没变化</h3>
+            <p>执行 <code>/bloom reload</code>（需 OP）。若替换了 jar，请整服重启，不要依赖热重载。</p>
+
+            <h3>为什么有 /bloom 和 /tuolingbloom 两个命令</h3>
+            <p>两者是同一个功能的别名，方便与其它插件命令名错开，任选其一即可。</p>
+
+            <h3>预览编辑器刷新后贴图没了</h3>
+            <p>预览贴图存在 <code>preview_tex.json</code>（与配置分离），正常情况刷新会恢复。若缺失，请先在 <code>⚙ 全局设置</code> 确认 DragonCore 贴图目录已正确选择。</p>
+
+            <!-- =========================================================
+                 ==================== 开发者文档 ====================
+                 ========================================================= -->
+            <div class="chapter-divider" id="dev">
+                开发者文档
+                <small>项目结构、内部设计、核心调用链、缓存模型与扩展方式 —— 面向想二次开发、阅读源码或接手维护的开发者。</small>
+            </div>
+
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th></th><th></th></tr></thead>
+                    <tbody>
+                    <tr><td>语言</td><td>Java 8</td></tr>
+                    <tr><td>构建</td><td>Maven + Shade + Lombok</td></tr>
+                    <tr><td>服务端 API</td><td>Spigot API 1.12.2</td></tr>
+                    <tr><td>硬依赖</td><td>DragonCore 2.6.1 · TuoLingCore 1.0-SNAPSHOT</td></tr>
+                    <tr><td>软依赖</td><td>MythicMobs 4.11.0 · PlaceholderAPI 2.11.2</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 id="dev-structure">项目结构</h2>
+            <p>整体分为插件本体 <code>TuoLingBloom</code> 和依赖框架 <code>TuoLingCore</code> 两部分。核心代码在 <code>com.tuoling.tuolingbloom</code> 包下：</p>
+            <div class="code-block">
+                <span class="code-lang">tree</span>
+                <pre><code>src/main/java/com/tuoling/tuolingbloom
+├── TuoLingBloom.java             主类：装配各 Manager + 软依赖注册
+├── actor/                        Actor 层（状态管理与冲突仲裁）
+│   ├── bloomer/
+│   │   ├── Bloomer.java          绽放者：冲突/冷却/取消清理
+│   │   └── BloomerData.java      绽放数据（tasks/textureIds/paths/bloomEntities）
+│   └── looker/
+│       ├── Looker.java           观察者：贴图 ID 缓存/补发/移除
+│       └── LookerData.java       观察数据
+├── bloom/                        路由层（bloomType → 实现）
+│   ├── Bloom.java                接口（getName + bloom）
+│   ├── BloomManager.java         KeyValueManager 按 bloomType 分流
+│   ├── BloomTexture.java         贴图入口
+│   └── BloomModel.java           模型入口
+├── cache/                        缓存层（Guava Table 多维索引）
+│   ├── CacheManager.java         InstanceManager 聚合
+│   ├── BloomerCache.java         Table&lt;UUID, preset, BloomerData&gt;
+│   ├── LookerCache.java          Map&lt;UUID, Table&lt;UUID, preset, LookerData&gt;&gt;
+│   ├── CooldownCache.java        Table&lt;UUID, preset, Long&gt;
+│   └── WorldTextureCache.java    Map&lt;UUID, List&lt;String&gt;&gt;
+├── command/                      命令层
+│   ├── CommandTrigger.java       Executor + TabCompleter
+│   ├── CommandManager.java       ValueManager 遍历派发
+│   └── maincommand/
+│       ├── BloomCommand.java     /bloom run
+│       ├── RemoveCommand.java    /bloom remove
+│       ├── ReloadCommand.java    /bloom reload
+│       └── HelpCommand.java      /bloom /bloom help
+├── compatible/                   兼容层（DragonCore 实体模型）
+│   ├── DragonEntityCompatible.java
+│   ├── DragonEntityListener.java
+│   └── DragonEntityData.java
+├── config/                       配置层（不可变快照）
+│   ├── data/                     纯字段载体（BloomPresetEntry/LayerSetting/ModelData/动画配置等）
+│   ├── holder/                   配置持有者（final 字段，如 DefaultConfig/TextureConfig/…）
+│   ├── loader/                   加载器（兜底 + 容错）
+│   └── ConfigHolderManager.java  AbstractKeyedManager 聚合
+├── listener/                     监听层
+│   ├── PlayerJoin.java           进服补发（40L 延迟）
+│   ├── PlayerQuit.java           退服清理缓存
+│   ├── MobSpawn.java             怪物生成自动绽放（MM 隔离）
+│   └── MobDeath.java             怪物死亡自动清理
+├── papi/
+│   └── BloomPlaceholderExpansion.java   PlaceholderAPI 扩展
+├── preset/                       策略层（5 种物品获取模式）
+│   ├── BloomStrategy.java        接口
+│   ├── BloomStrategyManager.java AbstractKeyedManager 统一注册
+│   ├── MainHandStrategy.java / OffHandStrategy.java
+│   ├── DragonSlotStrategy.java / InventoryStrategy.java
+│   └── DirectBloomStrategy.java
+├── router/
+│   └── BloomRouter.java          view 文件名 → bloomType 路由
+├── service/                      执行层（装配渲染）
+│   ├── BloomTextureService.java
+│   ├── BloomModelService.java
+│   ├── ReissuePlayerTextureService.java
+│   └── ReissueWorldTextureService.java
+└── utils/
+    ├── PresetUtils.java          破除「死亡链」的预设访问封装
+    ├── GetTexturePaths.java / GetMMName.java   物品识别
+    ├── Message.java              消息派发（player/console/bloomer）
+    ├── BloomEntityUtil.java      MythicMobs API 收敛点
+    ├── BloomLogger.java          后台日志
+    └── EnableMessageUtil.java    横幅</code></pre>
+            </div>
+            <p>依赖框架 <code>com.tuoling.tuolingcore</code> 提供通用基座：</p>
+            <div class="code-block">
+                <span class="code-lang">tree</span>
+                <pre><code>com.tuoling.tuolingcore
+├── collect/               容器基座（KeyedMap/ClassMap，基于 Guava Forwarding）
+├── framework/
+│   ├── command/CommandHandler.java
+│   ├── config/ConfigHolder.java
+│   └── manager/   AbstractKeyedManager/KeyValueManager/ValueManager/InstanceManager
+├── utils/          CommandUtil/ConfigLoadUtils/ItemUtil/NormalUtil
+└── TuoLingCore.java</code></pre>
+            </div>
+
+            <h2 id="dev-modules">模块职责</h2>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>包</th><th>职责</th><th>不该做的事</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>command</code></td><td>命令判定、参数校验、调用执行逻辑</td><td>不直接拼消息文本，统一走 <code>Message</code></td></tr>
+                    <tr><td><code>utils/Message</code></td><td>从 <code>MessageConfig</code> 取文案、替换占位符、按 sender/bloomer 类型派发</td><td>不判断权限、不处理冷却</td></tr>
+                    <tr><td><code>actor</code></td><td>状态管理、冲突/冷却仲裁、取消清理</td><td>不参与具体渲染，转交 <code>BloomManager</code></td></tr>
+                    <tr><td><code>bloom</code></td><td>按 bloomType 分流，接 <code>Bloom</code> 接口</td><td>不关心物品识别细节，交策略</td></tr>
+                    <tr><td><code>preset</code></td><td>5 种物品获取策略</td><td>版本敏感操作统一返回 <code>String</code></td></tr>
+                    <tr><td><code>service</code></td><td>装配渲染、写缓存、补发</td><td>不判断冲突/冷却</td></tr>
+                    <tr><td><code>cache</code></td><td>进程内状态（多维索引）</td><td>不发送消息、不依赖插件实例</td></tr>
+                    <tr><td><code>config</code></td><td>不可变快照的加载与持有</td><td>业务代码一律读快照，不改内部</td></tr>
+                    <tr><td><code>papi</code></td><td>对外稳定的占位符契约</td><td>改动需考虑兼容性</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 id="dev-startup">启动流程</h2>
+            <p>主类只做装配，具体工作交给各 Manager。<code>TuoLingBloom.inst()</code> 取代 <code>getInstance()</code> 作为单例访问入口：</p>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>@Override
+public void onEnable() {
+    inst = this;
+    bloomRouter = new BloomRouter();
+    registerManager();      // ConfigHolderManager / CommandManager / BloomStrategyManager / CacheManager / BloomManager
+    registerListeners();    // PlayerJoin/PlayerQuit/DragonEntityListener 常驻 + MobSpawn/MobDeath 按 MM
+    registerCommands();     // bloom、tuolingbloom 的 executor + tabCompleter
+    registerPlaceholder();  // 装了 PAPI 才注册
+
+    // MythicMobs 软依赖：未安装时不创建
+    if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
+        dragonEntityCompatible = new DragonEntityCompatible();
+    }
+    EnableMessageUtil.print(configHolderManager);
+}</code></pre>
+            </div>
+            <p>禁用时清理所有资源，防止泄漏：</p>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>@Override
+public void onDisable() {
+    if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
+        BloomEntityUtil.cancelAllMobBloom();   // 清理已绽放的 MM 实体
+    }
+    for (Player player : Bukkit.getOnlinePlayers()) {
+        // 清空 Bloomer / Looker / 世界贴图
+    }
+}</code></pre>
+            </div>
+
+            <h2 id="dev-core">核心设计：Actor + 路由策略 + Service</h2>
+            <p>核心调用链是：<strong>命令 → Actor（冲突/冷却仲裁）→ Router（按 bloomType 分流）→ Strategy（物品识别）→ Service（装配执行）</strong>。每层职责单一、正交扩展。</p>
+
+            <h3 id="dev-actor">Actor 双角色</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>角色</th><th>文件</th><th>职责</th><th>持有数据</th></tr></thead>
+                    <tbody>
+                    <tr>
+                        <td><code>Bloomer</code></td>
+                        <td><code>actor/bloomer/Bloomer</code></td>
+                        <td>绽放者：冲突检测、冷却判定、取消清理</td>
+                        <td><code>BloomerData</code>（tasks / textureIds / paths / bloomEntities）</td>
+                    </tr>
+                    <tr>
+                        <td><code>Looker</code></td>
+                        <td><code>actor/looker/Looker</code></td>
+                        <td>观察者：贴图 ID 缓存、补发触发、清理移除</td>
+                        <td><code>LookerData</code>（tasks / textureIds）</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>关键职责：</p>
+            <ul>
+                <li><code>Bloomer.bloom(preset)</code> 是玩家/mob 绽放的<strong>唯一入口</strong>，内部先做 <code>isBloomPreset → isConflict → isCooldown</code> 三重检查，再委托 <code>BloomManager.bloom()</code></li>
+                <li><code>Bloomer.cancelPreset</code> 负责取消所有 BukkitTask、移除客户端贴图、清理生成实体、通知所有在线玩家对应的 <code>Looker</code> 清理</li>
+                <li>重新运行同预设会先 <code>cancelPreset</code>（取消旧绽放）再走正常流程</li>
+                <li>补发入口在 <code>Looker.reissueBloom</code>，模型路线直接跳过（模型不走补发）</li>
+                <li>冷却判定只对 <code>Player</code> 生效，mob 一律放行（<code>isCooldown</code> 里非 Player 直接返回 false）</li>
+            </ul>
+
+            <h3 id="dev-router">Bloom 路由 + 策略</h3>
+            <p>绽放类型只有两种：<code>texture</code>（贴图）和 <code>model</code>（模型）。<code>view</code> 文件名 → 类型的映射由 <code>BloomRouter</code> 在配置加载时维护，<code>PresetUtils.getBloomType()</code> 经它查询：</p>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>public interface Bloom {
+    String getName();
+    void bloom(LivingEntity entity, String preset);
+}
+// BloomManager（KeyValueManager）注册 "model" → BloomModel、"texture" → BloomTexture
+public void bloom(LivingEntity entity, String preset) {
+    PresetUtils pu = new PresetUtils(preset);
+    String bloomType = pu.getBloomType();     // 经 BloomRouter 查询
+    get(bloomType).bloom(entity, preset);
+}</code></pre>
+            </div>
+            <p>物品获取方式抽象为 <code>BloomStrategy</code>，5 种策略由 <code>BloomStrategyManager</code>（AbstractKeyedManager）统一注册：</p>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>策略</th><th><code>getModeName()</code></th><th>输入</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>MainHandStrategy</code></td><td><code>main-hand</code></td><td>主手物品</td></tr>
+                    <tr><td><code>OffHandStrategy</code></td><td><code>off-hand</code></td><td>副手物品</td></tr>
+                    <tr><td><code>DragonSlotStrategy</code></td><td><code>dragon-slot</code></td><td>龙核自定义槽位</td></tr>
+                    <tr><td><code>InventoryStrategy</code></td><td><code>inventory</code></td><td>背包指定槽位索引</td></tr>
+                    <tr><td><code>DirectBloomStrategy</code></td><td><code>direct-bloom</code></td><td>直接按 value 查 identify 表</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>public interface BloomStrategy {
+    String getModeName();
+    List&lt;String&gt; getTexturePaths(Player player, String preset);  // 返回贴图路径
+    List&lt;String&gt; getMMNames(Player player, String preset);       // 返回模型名
+}</code></pre>
+            </div>
+            <div class="note warn">
+                <div class="note-h">多版本兼容的关键设计</div>
+                版本敏感操作（贴图路径、模型名）统一返回 <code>String</code>，交由策略封装——多版本适配时不改调用方，只加一个策略。
+            </div>
+
+            <h3 id="dev-pipeline">三阶段业务管线</h3>
+            <div class="code-block">
+                <span class="code-lang">text</span>
+                <pre><code>验证   Bloomer.bloom → isBloomPreset ? isConflict ? isCooldown ?
+   ↓
+装配   BloomStrategyManager.getTexturePaths / getMMNames → 物品识别 → paths / mmNames
+   ↓
+执行   BloomTextureService.texPathToBloom / BloomModelService.mmNameToBloom → 渲染 + 写缓存 + 补发</code></pre>
+            </div>
+
+            <h2 id="dev-cache">缓存设计</h2>
+            <p>缓存是 Actor 数据的状态存储，全部基于 Guava Table 做多维索引。</p>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>缓存</th><th>结构</th><th>语义</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>BloomerCache</code></td><td><code>Table&lt;UUID, String, BloomerData&gt;</code></td><td>绽放者 UUID × preset → 绽放数据</td></tr>
+                    <tr><td><code>LookerCache</code></td><td><code>Map&lt;UUID, Table&lt;UUID, String, LookerData&gt;&gt;</code></td><td>观察者 UUID →（绽放者 UUID × preset → 观察数据）</td></tr>
+                    <tr><td><code>CooldownCache</code></td><td><code>Table&lt;UUID, String, Long&gt;</code></td><td>玩家 UUID × preset → 冷却开始时间戳</td></tr>
+                    <tr><td><code>WorldTextureCache</code></td><td><code>Map&lt;UUID, List&lt;String&gt;&gt;</code></td><td>玩家 UUID → 世界贴图 ID 列表</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>// Bloomer 构造时直接拿到该实体在表里的「一行」Map；
+// Guava row 视图的修改会直接作用到原表，无需显式回写
+public Bloomer(LivingEntity bloomer) {
+    this.textureData = TuoLingBloom.inst().getCacheManager().getBloomerCache().row(bloomer.getUniqueId());
+}</code></pre>
+            </div>
+            <div class="note warn">
+                <div class="note-h">遍历修改需先拷贝</div>
+                遍历 <code>cellSet / row</code> 时若要修改，必须先拷贝到 <code>new ArrayList&lt;&gt;(...)</code>，否则会抛 <code>ConcurrentModificationException</code>。参考 <code>Looker.removeAll()</code> 与 <code>ReloadCommand.reloadBloom()</code> 的实现。
+            </div>
+            <p>生命周期清理：</p>
+            <ul>
+                <li><code>PlayerQuit</code>：移除 BloomerCache / LookerCache / CooldownCache 中的 UUID 条目，防内存泄漏</li>
+                <li><code>MobDeath</code>：对死亡 mob 执行 <code>cancelAllPreset</code></li>
+                <li><code>onDisable</code>：清理所有在线玩家的 Bloomer / Looker / 世界贴图 + MythicMobs 实体</li>
+            </ul>
+
+            <h2 id="dev-config">配置层（不可变快照）</h2>
+            <p>配置层遵循「不可变快照 + 原子替换」，分四层：<code>data</code>（字段载体）→ <code>loader</code>（加载兜底）→ <code>holder</code>（持有）→ <code>ConfigHolderManager</code>（聚合）。</p>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>// data 层：纯字段载体，字段 final，构造时一次性赋值；集合 getter 返回副本
+@Getter
+public class BloomPresetEntry {
+    private final String presetName, mode, value, view, group;
+    private final long duration;
+    private final List&lt;String&gt; valueList;   // 存 unmodifiableList 副本
+    public List&lt;String&gt; getValueList() { return new ArrayList&lt;&gt;(valueList); }
+}</code></pre>
+            </div>
+            <p><code>ConfigHolderManager.reloadAll()</code>：</p>
+            <ul>
+                <li>先 <code>clear()</code> 清空旧 Map 与 <code>BloomRouter</code> 路由</li>
+                <li>按顺序加载：<code>message.yml</code> → <code>model/*.yml</code>（登记路由 view→"model"）→ <code>texture/*.yml</code>（登记 view→"texture"）→ <code>world-texture.yml</code> → <code>config.yml</code></li>
+                <li><strong>先建好完整新 Map，再替换旧引用</strong>（原子替换），避免 reload 期间出现 null 窗口</li>
+            </ul>
+            <div class="note tip">
+                <div class="note-h">不可变的意义</div>
+                下游永远拿到完整有效的不可变快照，业务代码无需判空。「所有对配置数据的修改」必须作用在 <code>getXxx()</code> 返回的副本上，禁止原地改内部字段。Loader 在加载边界统一兜底，保证下游永远有效数据（渐进式配置：缺 <code>mode</code> 兜底 <code>main-hand</code>）。
+            </div>
+
+            <h2 id="dev-presetutils">PresetUtils：破除「死亡链」</h2>
+            <p>所有对 <code>BloomPresetEntry</code> 字段的访问一律通过 <code>PresetUtils</code>，禁止直接 <code>entry.getXxx()</code> 链式调用：</p>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>PresetUtils pu = new PresetUtils(preset);
+pu.exists()            // 预设是否存在
+pu.getView()           // 动画文件名
+pu.getMode()           // 策略模式
+pu.getValueList()      // value 逗号分割后的列表
+pu.getGroup()          // 绽放组
+pu.getDuration()       // 持续时间（-1 永久）
+pu.getTextureLayers()  // 贴图层级 Map&lt;Integer, LayerSetting&gt;
+pu.getModelConfig()    // 模型配置
+pu.getBloomType()      // "texture" / "model"（经 BloomRouter）</code></pre>
+            </div>
+
+            <h2 id="dev-softdep">软依赖隔离</h2>
+            <p>MythicMobs 与 PlaceholderAPI 是软依赖，相关代码必须<strong>条件注册 + 隔离</strong>，避免未安装时 <code>NoClassDefFoundError</code>：</p>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>if (Bukkit.getPluginManager().isPluginEnabled("MythicMobs")) {
+    dragonEntityCompatible = new DragonEntityCompatible();
+    registerEvents(new MobSpawn(), this);
+    registerEvents(new MobDeath(), this);
+}
+if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+    new BloomPlaceholderExpansion(this).register();
+}</code></pre>
+            </div>
+            <div class="note tip">
+                <div class="note-h">隔离核心原则</div>
+                所有直接引用 <code>io.lumine.xikage.mythicmobs.*</code> 的代码，必须收敛到 <code>BloomEntityUtil</code> 与 <code>DragonEntityCompatible</code> 两个类内。其他类只用纯 Bukkit 的 <code>LivingEntity</code>。这样软依赖类被 JVM 懒加载隔离，未安装时安全。
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>隔离点</th><th>文件</th><th>职责</th></tr></thead>
+                    <tbody>
+                    <tr><td>MythicMobs API 收敛</td><td><code>utils/BloomEntityUtil</code></td><td>spawn / reissueMobs / cancelAllMobBloom</td></tr>
+                    <tr><td>DragonCore 实体模型</td><td><code>compatible/DragonEntityCompatible</code></td><td>读取 EntityModel 配置并挂载模型</td></tr>
+                    <tr><td>MythicMobs 监听</td><td><code>listener/MobSpawn</code> / <code>MobDeath</code></td><td>怪物生成/死亡自动绽放/清理</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="note warn">
+                <div class="note-h">模型挂载时序</div>
+                MythicMobs 生成实体后，必须 <strong>2 tick 延迟</strong>再调 <code>ModelAPI.setEntityModel</code>，否则实体未完成注册会挂载失败。spawn 后立即转 <code>LivingEntity</code> 并做 <code>instanceof</code> 校验，spawn 本身要包 try-catch 处理 <code>InvalidMobTypeException</code>。<br><br>
+                玩家进服补发也必须延迟 <strong>40 tick（2 秒）</strong>：DragonCore 客户端实体加载有延迟，玩家刚进服立即 <code>CoreAPI.setPlayerWorldTextureItem</code> 会因目标实体未加载而失败。延迟任务回调里要先检查玩家是否仍在线。
+            </div>
+
+            <h2 id="dev-chain">绽放调用链</h2>
+
+            <h3>玩家 /bloom run 完整链路</h3>
+            <div class="code-block">
+                <span class="code-lang">text</span>
+                <pre><code>1. CommandTrigger.onCommand → CommandManager.runCommand
+2. BloomCommand.isMatch("run") → execute → new Bloomer(player).bloom(preset)
+3. Bloomer.bloom：isBloomPreset? isConflict? isCooldown? → BloomManager.bloom(player, preset)
+4. BloomManager：PresetUtils.getBloomType() → get(bloomType) → BloomTexture / BloomModel
+5. BloomTexture.bloom → BloomStrategyManager.getTexturePaths(player, preset) → List&lt;path&gt;
+6. BloomTextureService.texPathToBloom(paths) → 逐层渲染 + 写缓存 + 补发</code></pre>
+            </div>
+
+            <h3>怪物自动绽放链路</h3>
+            <div class="code-block">
+                <span class="code-lang">text</span>
+                <pre><code>1. MythicMobSpawnEvent → MobSpawn.onMobSpawn
+2. 读取 mob 配置的 TuoLingBloom 列表 → new Bloomer((LivingEntity) entity).bloom(preset)
+3. 后续与玩家链路一致（mob 不进 isCooldown，因为非 Player）</code></pre>
+            </div>
+
+            <h3>补发（reissue）链路</h3>
+            <div class="code-block">
+                <span class="code-lang">text</span>
+                <pre><code>1. PlayerJoinEvent → 延迟 40L tick（等客户端实体加载完成）
+2. reissueForPlayers：遍历在线 Bloomer，对每个 BloomerData 调 Looker.reissueBloom
+3. reissueForMobs：MythicMobs 隔离，遍历 ActiveMob 补发
+4. ReissueWorldTextureService.reissue：补发世界贴图</code></pre>
+            </div>
+            <div class="note">
+                <div class="note-h">补发拆分</div>
+                补发按实体类型拆 <code>reissueForPlayers</code> / <code>reissueForMobs</code> 两个私有方法，提高可读性。模型路线不走补发。
+            </div>
+
+            <h2 id="dev-events">事件</h2>
+            <p>插件<strong>没有对外公开的监听事件</strong>。外部插件如需感知绽放行为，建议通过命令/配置协作，或直接读取 <code>BloomManager</code> / <code>CacheManager</code> 提供的查询接口。当前对外契约只有 PlaceholderAPI 占位符。</p>
+
+            <h2 id="dev-placeholder">占位符扩展</h2>
+            <p>插件通过 <code>BloomPlaceholderExpansion</code>（identifier 为 <code>tuolingbloom</code>）向 PlaceholderAPI 注册占位符，仅当检测到 PlaceholderAPI 存在时才注册：</p>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>占位符</th><th>返回</th><th>数据来源</th></tr></thead>
+                    <tbody>
+                    <tr>
+                        <td><code>%tuolingbloom_cooldown_&lt;预设名&gt;%</code></td>
+                        <td>该玩家该预设剩余冷却秒数</td>
+                        <td><code>Bloomer.getCooldown(preset)</code> → <code>CooldownCache</code></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>控制台请求（<code>player</code> 为 <code>null</code>）时返回 <code>null</code>，不会抛异常。</p>
+
+            <h2 id="dev-extend">扩展指南</h2>
+
+            <h3>1. 新增一种物品获取策略</h3>
+            <ol>
+                <li>新建类实现 <code>BloomStrategy</code>：<code>getModeName()</code> + <code>getTexturePaths()</code> + <code>getMMNames()</code></li>
+                <li>在 <code>BloomStrategyManager</code> 构造器里 <code>add</code> 你的新策略</li>
+                <li>在 config.yml 预设里写 <code>mode: "你的模式名"</code></li>
+            </ol>
+            <div class="code-block">
+                <span class="code-lang">java</span>
+                <pre><code>public class MySlotStrategy implements BloomStrategy {
+    public String getModeName() { return "my-slot"; }
+    public List&lt;String&gt; getTexturePaths(Player p, String preset) { ... }
+    public List&lt;String&gt; getMMNames(Player p, String preset) { ... }
+}</code></pre>
+            </div>
+
+            <h3>2. 新增一种绽放类型（除 texture/model 外）</h3>
+            <ol>
+                <li>新建类实现 <code>Bloom</code>：<code>getName()</code> + <code>bloom()</code></li>
+                <li>在 <code>BloomManager</code> 构造器里 <code>register("newType", new BloomXxx())</code></li>
+                <li>新建对应 Service 完成装配执行</li>
+                <li>在配置加载处为新类型目录登记路由：<code>bloomRouter.addRouter(文件名, "newType")</code></li>
+            </ol>
+
+            <h3>3. 新增一个命令</h3>
+            <ol>
+                <li>新建类实现 <code>CommandHandler</code>：<code>execute()</code> + <code>isMatch()</code></li>
+                <li>在 <code>CommandManager</code> 构造器里 <code>register(...)</code></li>
+                <li>如需 Tab 补全，在 <code>CommandTrigger.onTabComplete</code> 里补充分支</li>
+            </ol>
+
+            <h3>4. 新增一个缓存</h3>
+            <ol>
+                <li>新建缓存类（继承 <code>ForwardingTable</code> / <code>ForwardingMap</code>）</li>
+                <li>在 <code>CacheManager</code> 构造器里 <code>register(XxxCache.class, new XxxCache())</code></li>
+                <li>添加 <code>getXxxCache()</code> 方法（带 <code>containsKey</code> 防御 + 未注册提示）</li>
+            </ol>
+
+            <h2 id="dev-build">构建与部署</h2>
+
+            <h3>依赖</h3>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>依赖</th><th>版本</th><th>scope</th></tr></thead>
+                    <tbody>
+                    <tr><td>spigot-api</td><td>1.12.2-R0.1-SNAPSHOT</td><td><code>provided</code></td></tr>
+                    <tr><td>DragonCore</td><td>2.6.1.5（本地 <code>libs/</code> jar）</td><td><code>system</code></td></tr>
+                    <tr><td>TuoLingCore</td><td>1.0-SNAPSHOT</td><td><code>provided</code></td></tr>
+                    <tr><td>MythicMobs</td><td>4.11.0</td><td><code>provided</code></td></tr>
+                    <tr><td>PlaceholderAPI</td><td>2.11.2</td><td><code>provided</code></td></tr>
+                    <tr><td>lombok</td><td>1.18.30</td><td><code>provided</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>除 DragonCore 外全部为 <code>provided</code>/<code>system</code>，不会打进产物，避免与其他插件冲突。</p>
+
+            <h3>打包</h3>
+            <div class="code-block">
+                <span class="code-lang">shell</span>
+                <pre><code>mvn clean package</code></pre>
+            </div>
+            <p>构建后 <code>target/</code> 下会出现两个产物：</p>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>文件</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr><td><code>TuoLingBloom-1.0.jar</code></td><td><strong>部署用</strong>，shade 后的完整产物，放进 <code>plugins/</code></td></tr>
+                    <tr><td><code>original-TuoLingBloom-1.0.jar</code></td><td>shade 前的原始 jar，不要部署</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="note warn">
+                <div class="note-h">部署后请整服重启</div>
+                覆盖 jar 后用 <code>/reload</code> 或插件管理工具，常常仍会加载旧类，表现为「改了代码但行为没变」。排查时优先核对报错堆栈行号与当前源码是否一致。
+            </div>
+
+            <h2 id="dev-conventions">编码约定</h2>
+            <ul>
+                <li><strong>注释</strong>：统一 <code>//</code> 行注释、简体中文；只在解释「为什么」或版本差异处写，不复述代码</li>
+                <li><strong>单例访问</strong>：统一 <code>TuoLingBloom.inst()</code>，不再用 <code>getInstance()</code></li>
+                <li><strong>Lombok</strong>：数据类用 <code>@Getter</code> + <code>@AllArgsConstructor</code> 减少样板代码</li>
+                <li><strong>集合 getter</strong>：返回新集合实例（内含副本数据），禁止直接暴露内部引用</li>
+                <li><strong>配置字段</strong>：全部 <code>final</code>，构造时一次性赋值，禁止原地修改</li>
+                <li><strong>消息派发</strong>：玩家/控制台/绽放者三类消息统一走 <code>Message</code> 的 <code>sendPlayer</code> / <code>sendConsole</code> / <code>sendBloomer</code>，不直接 <code>sender.sendMessage</code></li>
+                <li><strong>后台日志</strong>：后台日志用 <code>BloomLogger</code>，与玩家消息区分；消息文案<strong>不走 SendMessageUtil</strong></li>
+                <li><strong>域内放置</strong>：领域管理器放对应领域包（如 <code>BloomManager</code> 在 <code>bloom/</code>），跨域基础设施放集中包（如 <code>CacheManager</code> 在 <code>cache/</code>）</li>
+                <li><strong>Actor 放置</strong>：Actor 类（<code>Bloomer</code>/<code>Looker</code>）放 <code>actor/</code> 包，与 model/service 数据类分开</li>
+                <li><strong>纹理 ID 拼接</strong>：组件间用下划线 <code>_</code> 分隔（<code>preset_index_uuid</code>），避免碰撞</li>
+                <li><strong>补发拆分</strong>：按实体类型拆 <code>reissueForPlayers</code> / <code>reissueForMobs</code> 两个私有方法</li>
+                <li><strong>加载边界兜底</strong>：容错集中在配置加载边界，下游组件接收永远有效数据，不做没必要的判空</li>
+                <li><strong>模型配置结构</strong>：<code>model/*.yml</code> 用 <code>Map&lt;Integer, ModelData&gt;</code>（<code>setting.1/2</code> 数字键），与 <code>texture/*.yml</code> 的 <code>LayerSetting</code> 对齐</li>
+            </ul>
+
+            <h4>本地编译校验</h4>
+            <p>没有 Maven 时，可用 javac 全量编译做语法与类型校验（classpath 指向本机 Maven 仓库与 <code>libs/</code> 中的依赖）：</p>
+            <div class="code-block">
+                <span class="code-lang">powershell</span>
+                <pre><code>$repo = "$env:USERPROFILE\.m2\repository"
+$cp = @(
+  "$repo\org\spigotmc\spigot-api\1.12.2-R0.1-SNAPSHOT\spigot-api-1.12.2-R0.1-*.jar",
+  "$repo\org\projectlombok\lombok\1.18.30\lombok-1.18.30.jar",
+  "libs\DragonCore-2.6.1.5.jar",
+  "$repo\io\lumine\xikage\mythicmobs\4.11.0\MythicMobs-4.11.0.jar",
+  "$repo\me\clip\placeholderapi\2.11.2\placeholderapi-2.11.2.jar"
+) -join ";"
+$files = Get-ChildItem "src\main\java" -Recurse -Filter *.java | % { $_.FullName }
+javac -encoding UTF-8 -cp $cp -d target\classes $files</code></pre>
+            </div>
+
+            <div class="doc-footer">
+                <span>TuoLingBloom · 用户文档 + 开发者文档</span>
+                <span>适用于 1.0</span>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    function initCopyButtons() {
+        var blocks = document.querySelectorAll('.code-block');
+        Array.prototype.forEach.call(blocks, function (block) {
+            var pre = block.querySelector('pre');
+            if (!pre) return;
+            var btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.type = 'button';
+            btn.textContent = '复制';
+            btn.addEventListener('click', function () {
+                copyText(pre.innerText).then(function () {
+                    btn.textContent = '已复制';
+                    btn.classList.add('done');
+                    setTimeout(function () {
+                        btn.textContent = '复制';
+                        btn.classList.remove('done');
+                    }, 1400);
+                });
+            });
+            block.appendChild(btn);
+        });
+    }
+    function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });
+        }
+        fallbackCopy(text);
+        return Promise.resolve();
+    }
+    function fallbackCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+    }
+    function initScrollSpy() {
+        var items = Array.prototype.slice.call(document.querySelectorAll('.toc-item[href^="#"]'));
+        if (!items.length) return;
+        var targets = [];
+        items.forEach(function (item) {
+            var el = document.getElementById(item.getAttribute('href').slice(1));
+            if (el) targets.push({ item: item, el: el });
+        });
+        if (!targets.length) return;
+        function highlight() {
+            var current = targets[0];
+            targets.forEach(function (t) {
+                if (t.el.getBoundingClientRect().top <= 90) current = t;
+            });
+            items.forEach(function (i) { i.classList.remove('active'); });
+            if (current) current.item.classList.add('active');
+        }
+        var ticking = false;
+        window.addEventListener('scroll', function () {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(function () { highlight(); ticking = false; });
+        }, { passive: true });
+        highlight();
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        initCopyButtons();
+        initScrollSpy();
+    });
+})();
+</script>
+</body>
+</html>

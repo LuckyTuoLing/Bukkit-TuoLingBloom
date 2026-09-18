@@ -1,0 +1,333 @@
+
+
+setting:
+  1:
+    delay: 0 #0秒后播放第一个
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -60
+      rotate-z: 0
+      path: "hh/h1.png" #默认贴图,检测不到时使用
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 2.30 #2.35-0.05
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 1.5
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  2:
+    delay: 2 #2秒后播放第二个
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -120
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 2.25 #2.35-0.10
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 2.5
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  3:
+    delay: 2 #2秒后播放第三个
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -180
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 2.20 #2.35-0.15
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 3.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  4:
+    delay: 2
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -240
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 2.15 #2.35-0.20
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 4.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  5:
+    delay: 2
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -300
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 2.10 #2.35-0.25
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 5.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  6:
+    delay: 2
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -360
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 2.05 #2.35-0.30
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 6.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  7:
+    delay: 2
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -420
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 2.00 #2.35-0.35
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 7.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  8:
+    delay: 2
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -480
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 1.95 #2.35-0.40
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 8.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  9:
+    delay: 2
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -540
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 1.90 #2.35-0.45
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 9.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false
+  10:
+    delay: 2
+    texture:
+      translate-x: 0
+      translate-y: 2.35
+      translate-z: 0.0
+      rotate-x: 90
+      rotate-y: -600
+      rotate-z: 0
+      path: "hh/h1.png"
+    animations:
+      translate-animation:
+        direction: 'z'
+        delay: 0
+        distance: 1.85 #2.35-0.50
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+      scale-animation:
+        delay: 0
+        from-scale: 10.3
+        to-scale: 10.3
+        duration: 3000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false

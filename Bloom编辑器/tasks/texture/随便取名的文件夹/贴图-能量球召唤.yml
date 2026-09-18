@@ -1,0 +1,27 @@
+setting:
+  1:
+    delay: 0
+    texture:
+      translate-x: 0
+      translate-y: 2
+      translate-z: 0
+      rotate-x: 90
+      rotate-y: 0
+      rotate-z: 0
+      path: "能量球/能量球.png"
+    animations:
+      scale-animation:
+        delay: 0
+        from-scale: 0
+        to-scale: 2
+        duration: 1000
+        cycle-count: 1
+        fixed: true
+        resetTime: 0
+      rotate-animation:
+        direction: 'z'
+        delay: 0
+        angle: 360.0
+        duration: 6000
+        cycle-count: -1
+        fixed: false

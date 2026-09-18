@@ -1,0 +1,8 @@
+{
+    "texture/贴图-1.yml":  {
+                             "1":  "bloom/魂环/h3_up.png"
+                         },
+    "texture/世界魂环/贴图-世界贴图.yml":  {
+                                     "1":  "bloom/魂环/h1_up.png"
+                                 }
+}

@@ -1,0 +1,12 @@
+name: TuoLingBloom
+version: '${project.version}'
+main: com.tuoling.tuolingbloom.TuoLingBloom
+commands:
+  bloom:
+  tuolingbloom:
+depend:
+  - "DragonCore"
+  - "TuoLingCore"
+softdepend:
+  - "MythicMobs"
+  - "PlaceholderAPI"

@@ -1,0 +1,14 @@
+setting:
+  1:
+    delay: 0
+    #x,y,z相对于实体的位置在加下面的参数
+    location:
+      x: 0
+      y: 0
+      z: 3
+  2:
+    delay: 2
+    location:
+      x: 0
+      y: 0
+      z: 0
