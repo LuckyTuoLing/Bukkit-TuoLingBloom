@@ -7,6 +7,7 @@
 |--------------|------------------------------|
 | 版本         | `1.0`                        |
 | 服务端       | Spigot / Paper 及其分支      |
+| 适用版本      | 1.12.2                     |
 | Java         | Java 8 及以上                |
 | 硬依赖       | `DragonCore`、`TuoLingCore`  |
 | 软依赖       | `MythicMobs`、`PlaceholderAPI`（可选）|
